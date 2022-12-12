@@ -7,14 +7,13 @@ import { World } from './game/World';
 import { Utils } from './Utils';
 import { Network } from './game/Network';
 
-const WebSocketHost = window.location.origin.replace(/^http/, 'ws');
+const WebSocketHost = process.env.REACT_APP_WEBSOCKET_CONNECTION || window.location.origin.replace(/^http/, 'ws');
 const client = new WebSocket(WebSocketHost);
 
 export const Game = (): JSX.Element => {
     const containerRef = createRef<HTMLDivElement>();
     const engineRef = useRef<Engine>();
     const guiRef = useRef<GUI>();
-    const runningRef = useRef<boolean>();
     const networkRef = useRef<Network>();
 
     // constants
@@ -50,7 +49,6 @@ export const Game = (): JSX.Element => {
             }
             if (messageData.hasOwnProperty('connected')) {
                 if (!networkRef.current) {
-                    runningRef.current = true;
                     const playerModel = Utils.createModel(new THREE.IcosahedronGeometry(PLAYER_SPHERE_RADIUS, 5), new THREE.MeshLambertMaterial({ color: 0x88ccee }));
                     startGame(new Player(messageData.connected, playerModel));
                     startNetwork(messageData.interval);

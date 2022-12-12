@@ -223,7 +223,7 @@ export class Engine {
 
     updatePlayers = (deltaTime: number) => {
         for (let player of Array.from(this.players.values())) {
-            player.updatePlayer(deltaTime, this.GRAVITY);
+            player.updatePlayer(deltaTime, 0);
         }
     }
 
