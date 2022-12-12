@@ -21,7 +21,7 @@ export class Game {
         // Spinning the http server and the websocket server.
         let webSocketsServerPort: number = defaultWebSocketPort;
         try {
-            webSocketsServerPort = parseInt(process.env.REACT_APP_WEBSOCKET_PORT!);
+            webSocketsServerPort = parseInt(process.env.WEBSOCKET_PORT!);
         } catch (e) {
             console.log('Could not parse websocket port');
         }
@@ -82,6 +82,7 @@ export class Game {
             server.clients.delete(userID);
             server.players.delete(userID);
             if (!server.clients.size) {
+                console.log('Game stopped');
                 this.running = false;
             }
         });
