@@ -4,8 +4,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
 import { Player, SimpleVector } from './types';
 
-const defaultWebSocketPort = 8000;
-
 export class Game {
     server: http.Server;
     wsServer: WebSocketServer;
@@ -19,14 +17,9 @@ export class Game {
 
     constructor() {
         // Spinning the http server and the websocket server.
-        let webSocketsServerPort: number = defaultWebSocketPort;
-        try {
-            webSocketsServerPort = parseInt(process.env.WEBSOCKET_PORT!);
-        } catch (e) {
-            console.log('Could not parse websocket port');
-        }
+        const webSocketPort = process.env.WEBSOCKET_PORT || 8000;
         this.server = http.createServer();
-        this.server.listen(webSocketsServerPort || defaultWebSocketPort);
+        this.server.listen(webSocketPort);
         this.wsServer = new WebSocketServer({
             httpServer: this.server
         });
