@@ -1,23 +1,24 @@
 import express from 'express';
+import http from 'http';
 import path from 'path';
 import { Game } from './game';
 
 export class Server {
-    expressServer: express.Express;
     game: Game;
+    server: http.Server;
 
     constructor() {
-        this.expressServer = express();
-        this.game = new Game();
+        this.server = this.startServer();
+        this.game = new Game(this.server);
     }
 
-    startServer = () => {
-        const port = process.env.PORT || 8000;
-        this.expressServer.use(express.static(path.join(__dirname, '../client/build')));
-        this.expressServer.get('*', (req, res) => {
+    protected startServer = (): http.Server => {
+        const port = process.env.PORT || 5000;
+        const app = express();
+        app.use(express.static(path.join(__dirname, '../client/build')));
+        app.get('*', (req, res) => {
             res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
         });
-        this.expressServer.listen(port);
-        this.game.startWebsocket();
+        return app.listen(port);
     }
 }

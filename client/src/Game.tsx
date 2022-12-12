@@ -1,14 +1,14 @@
 import React, { useEffect, createRef, useRef } from 'react';
 import * as THREE from 'three';
 import { GUI } from 'lil-gui';
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import { Player } from './game/Player';
 import { Engine } from './game/Engine';
 import { World } from './game/World';
 import { Utils } from './Utils';
 import { Network } from './game/Network';
 
-const client = new W3CWebSocket(process.env.REACT_APP_WEBSOCKET_CONNECTION!);
+const WebSocketHost = window.location.origin.replace(/^http/, 'ws');
+const client = new WebSocket(WebSocketHost);
 
 export const Game = (): JSX.Element => {
     const containerRef = createRef<HTMLDivElement>();
@@ -62,7 +62,9 @@ export const Game = (): JSX.Element => {
             }
         };
 
-        client.onerror = () => {
+        client.onerror = (error) => {
+            console.log('Error on connection');
+            console.log(error);
             disconnectGame();
         }
 

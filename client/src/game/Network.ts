@@ -1,4 +1,3 @@
-import { w3cwebsocket as W3CWebSocket } from 'websocket';
 import * as THREE from 'three';
 import { Engine } from './Engine';
 import { Player } from './Player';
@@ -6,13 +5,13 @@ import { Utils } from '../Utils';
 import { SimplePlayer, State } from '../Types';
 
 export class Network {
-    client: W3CWebSocket;
+    client: WebSocket;
     engine: Engine;
     interval: number;
     nextRunTime: Date;
     running: boolean;
 
-    constructor(client: W3CWebSocket, engine: Engine, interval?: number) {
+    constructor(client: WebSocket, engine: Engine, interval?: number) {
         this.client = client;
         this.engine = engine;
         this.interval = interval || 100;

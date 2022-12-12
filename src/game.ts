@@ -1,28 +1,26 @@
-import { server as WebSocketServer, connection } from 'websocket';
+import { Server as WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
+import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
 import { Player, SimpleVector } from './types';
 
 export class Game {
-    server: http.Server;
     wsServer: WebSocketServer;
 
-    clients: Map<string, connection>;
+    clients: Map<string, WebSocket>;
     players: Map<string, Player>;
 
     running: boolean;
     interval: number;
     nextRunTime: Date;
 
-    constructor() {
+    constructor(server: http.Server) {
         // Spinning the http server and the websocket server.
-        const webSocketPort = process.env.WEBSOCKET_PORT || 8000;
-        this.server = http.createServer();
-        this.server.listen(webSocketPort);
         this.wsServer = new WebSocketServer({
-            httpServer: this.server
+            server
         });
+        this.startWebsocket();
         this.clients = new Map();
         this.players = new Map();
         this.interval = 100;
@@ -36,41 +34,39 @@ export class Game {
     }
 
     sendMessage = (userID: string, json: string) => {
-        this.clients.get(userID)?.sendUTF(json);
+        this.clients.get(userID)?.send(json);
     }
 
     sendMessageToAll = (json: string) => {
         // We are sending the current data to all connected clients
         for (const [client, connection] of this.clients) {
-            connection.sendUTF(json);
+            connection.send(json);
         }
     }
       
     startWebsocket = () => {
-        this.wsServer.on('request', (request) => {
-            console.log(`Received new connection from origin ${request.origin}`);
+        this.wsServer.on('connection', (ws, request) => {
+            console.log(`Received new connection from origin ${request.socket.remoteAddress}`);
             const userID = uuidv4();
-            const connection = request.accept(null, request.origin);
-            this.setConnection(connection, userID);
-            this.clients.set(userID, connection);
+            this.setConnection(ws, userID);
+            this.clients.set(userID, ws);
             this.sendMessage(userID, JSON.stringify({ connected: userID, interval: this.interval }));
-            console.log(`Connected ${userID} to ${request.origin}`);
+            console.log(`Connected ${userID} to ${request.socket.remoteAddress}`);
         })
     }
 
-    setConnection = (connection: connection, userID: string) => {
+    setConnection = (connection: WebSocket, userID: string) => {
         const server = this;
         
-        connection.on('message', (message) => {
-            if (message.type === 'utf8') {
-                this.players.set(userID, this.parsePlayerMessage(userID, message.utf8Data));
-                if (!this.running) {
-                    this.startGame();
-                }
+        connection.on('message', (data, isBinary) => {
+            const message = isBinary ? data : data.toString();
+            this.players.set(userID, this.parsePlayerMessage(userID, message as string));
+            if (!this.running) {
+                this.startGame();
             }
         });
 
-        connection.on('close', (connection) => {
+        connection.on('close', () => {
             console.log("Player " + userID + " disconnected.");
             server.clients.delete(userID);
             server.players.delete(userID);
