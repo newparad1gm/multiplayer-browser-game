@@ -47,8 +47,6 @@ export class Engine {
 
         this.world.loadWorld(this.scene, this.animate);
 
-        this.createPlayers();
-
         this.spheres = [];
         this.createSpheres();
 
@@ -79,10 +77,6 @@ export class Engine {
         return stats;
     }
 
-    protected createPlayers = () => {
-        this.scene.add(this.player.model);
-    }
-
     protected startScene = () => {
         const scene = new THREE.Scene();
         scene.background = this.world.background;
@@ -107,9 +101,7 @@ export class Engine {
 
     protected teleportPlayerIfOob = () => {
         if (this.camera.position.y <= - 25) {
-            this.player.collider.start.set(0, 0.35, 0);
-            this.player.collider.end.set(0, 1, 0);
-            this.player.collider.radius = 0.35;
+            this.player.initializeCollider();
             this.camera.position.copy(this.player.collider.end);
             this.camera.rotation.set(0, 0, 0);
         }
@@ -207,6 +199,7 @@ export class Engine {
         // an object traversing another too quickly for detection.
         for (let i = 0; i < this.STEPS_PER_FRAME; i++) {
             this.controls.controls(deltaTime);
+            this.player.orientation.y = this.camera.rotation.y;
             this.player.updatePlayer(deltaTime, this.GRAVITY);
             this.playerCollisions(this.player);
             this.updatePlayers(deltaTime);
@@ -246,6 +239,7 @@ export class Engine {
             playerID: this.player.playerID,
             position: Utils.createVectorJSON(this.player.collider.end),
             velocity: Utils.createVectorJSON(this.player.velocity),
+            orientation: Utils.createVectorJSON(this.player.orientation),
             direction: Utils.createVectorJSON(this.player.direction)
         }
     }

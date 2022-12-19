@@ -2,12 +2,14 @@ export class Player {
     playerID: string;
     position: SimpleVector;
     velocity: SimpleVector;
+    orientation: SimpleVector;
     direction: SimpleVector;
 
     constructor(playerID: string) {
         this.playerID = playerID;
         this.position = new SimpleVector();
         this.velocity = new SimpleVector();
+        this.orientation = new SimpleVector();
         this.direction = new SimpleVector();
     }
 }

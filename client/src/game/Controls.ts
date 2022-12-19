@@ -45,7 +45,10 @@ export class Controls {
         document.body.addEventListener('mousemove', event => {
             if (document.pointerLockElement === document.body) {
                 this.camera.rotation.y -= event.movementX / 500;
-                this.camera.rotation.x -= event.movementY / 500;
+                const verticalLook = this.camera.rotation.x - (event.movementY / 500);
+                if (verticalLook < 1.5 && verticalLook > -1.5) {
+                    this.camera.rotation.x = verticalLook;
+                }
             }
         });
     }

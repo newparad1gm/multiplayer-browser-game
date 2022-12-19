@@ -16,7 +16,7 @@ export class Utils {
         });
     }
 
-    static createVectorJSON = (vector: THREE.Vector3): SimpleVector => {
+    static createVectorJSON = (vector: THREE.Vector3 | THREE.Euler): SimpleVector => {
         return {
             x: vector.x,
             y: vector.y,
@@ -31,7 +31,7 @@ export class Utils {
         return model;
     }
 
-    static setVector = (vector: THREE.Vector3, simple: SimpleVector) => {
+    static setVector = (vector: THREE.Vector3 | THREE.Euler, simple: SimpleVector) => {
         vector.set(simple.x, simple.y, simple.z);
     }
 }

@@ -16,6 +16,7 @@ export type SimplePlayer = {
     playerID: string;
     position: SimpleVector;
     velocity: SimpleVector;
+    orientation: SimpleVector;
     direction: SimpleVector;
 }
 

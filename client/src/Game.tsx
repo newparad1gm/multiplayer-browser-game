@@ -49,8 +49,7 @@ export const Game = (): JSX.Element => {
             }
             if (messageData.hasOwnProperty('connected')) {
                 if (!networkRef.current) {
-                    const playerModel = Utils.createModel(new THREE.IcosahedronGeometry(PLAYER_SPHERE_RADIUS, 5), new THREE.MeshLambertMaterial({ color: 0x88ccee }));
-                    startGame(new Player(messageData.connected, playerModel));
+                    startGame(new Player(messageData.connected, 'Soldier.glb'));
                     startNetwork(messageData.interval);
                 }
             } else if (messageData.hasOwnProperty('state')) {

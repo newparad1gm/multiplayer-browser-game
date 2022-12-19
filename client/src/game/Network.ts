@@ -55,6 +55,7 @@ export class Network {
     setPlayerVectors = (player: Player, simple: SimplePlayer) => {
         Utils.setVector(player.collider.end, simple.position);
         Utils.setVector(player.velocity, simple.velocity);
+        Utils.setVector(player.orientation, simple.orientation);
         Utils.setVector(player.direction, simple.direction);
     }
 
@@ -66,17 +67,16 @@ export class Network {
                 continue;
             }
             if (!this.engine.players.has(playerID)) {
-                const newPlayerModel = Utils.createModel(new THREE.IcosahedronGeometry(.3, 5), new THREE.MeshLambertMaterial({ color: 0x88ccee }));
-                const newPlayer = new Player(playerID, newPlayerModel);
+                const newPlayer = new Player(playerID, 'Soldier.glb');
+                newPlayer.model!.loadModel(this.engine.scene);
                 this.engine.players.set(playerID, newPlayer);
-                this.engine.scene.add(newPlayerModel);
             }
             const currPlayer = this.engine.players.get(playerID);
             this.setPlayerVectors(currPlayer!, player);
         }
         for (let [playerID, player] of Array.from(this.engine.players.entries())) {
-            if (!foundPlayers.has(playerID)) {
-                this.engine.scene.remove(player.model);
+            if (!foundPlayers.has(playerID) && player.model) {
+                player.model.model && this.engine.scene.remove(player.model.model);
                 this.engine.players.delete(playerID);
             }
         }

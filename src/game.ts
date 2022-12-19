@@ -1,6 +1,5 @@
 import { Server as WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
-import express from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
 import { Player, SimpleVector } from './types';
@@ -23,7 +22,7 @@ export class Game {
         this.startWebsocket();
         this.clients = new Map();
         this.players = new Map();
-        this.interval = 100;
+        this.interval = 50;
         try {
             this.interval = process.env.GAME_INTERVAL ? parseInt(process.env.GAME_INTERVAL) : this.interval;
         } catch (err) {
@@ -82,6 +81,7 @@ export class Game {
         const player = new Player(userID);
         player.position = new SimpleVector(data.position.x, data.position.y, data.position.z);
         player.velocity = new SimpleVector(data.velocity.x, data.velocity.y, data.velocity.z);
+        player.orientation = new SimpleVector(data.orientation.x, data.orientation.y, data.orientation.z);
         player.direction = new SimpleVector(data.direction.x, data.direction.y, data.direction.z);
         return player;
     }
@@ -93,23 +93,20 @@ export class Game {
     startGame = () => {
         console.log('Game starting');
         this.running = true;
-        setTimeout(() => this.run(), this.interval);
+        setImmediate(() => this.run());
     }
 
     protected run = async () => {
-        while (true) {
-            try {
-                this.nextRunTime = Utils.offsetTime(Utils.now(), this.interval);
-                this.sendMessageToAll(this.createStateMessage());
-            } catch (err) {
-                console.log(`Could not run - ${err}`);
-            } finally {
-                if (this.running) {
-                    const delay = this.nextRunTime.getTime() - Utils.now().getTime();
-                    await Utils.delay(delay);
-                } else {
-                    break;
-                }
+        try {
+            this.nextRunTime = Utils.offsetTime(Utils.now(), this.interval);
+            this.sendMessageToAll(this.createStateMessage());
+        } catch (err) {
+            console.log(`Could not run - ${err}`);
+        } finally {
+            if (this.running) {
+                const delay = this.nextRunTime.getTime() - Utils.now().getTime();
+                await Utils.delay(delay);
+                setImmediate(() => this.run());
             }
         }
     }
