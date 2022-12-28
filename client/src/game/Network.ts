@@ -60,6 +60,10 @@ export class Network {
     }
 
     updateState = (state: State) => {
+        if (!this.engine.scene || !this.engine.player) {
+            return;
+        }
+        
         const foundPlayers: Set<string> = new Set();
         for (let [playerID, player] of Object.entries(state)) {
             foundPlayers.add(playerID);

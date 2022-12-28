@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
+import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
 import { Player } from './Player';
-import { World } from './World';
 import { Model, Vectors, SimplePlayer } from '../Types';
 import { Controls } from './Controls';
 import { Utils } from '../Utils';
+import { World } from '../world/World';
 
 export class Engine {
     GRAVITY: number = 30;
@@ -15,14 +16,15 @@ export class Engine {
     protected sphereIdx = 0;
     protected clock: THREE.Clock;
 
+    renderer?: THREE.WebGLRenderer;
+    scene?: THREE.Scene;
+    camera?: THREE.PerspectiveCamera;
+    controls?: Controls;
+    
     player: Player;
-    renderer: THREE.WebGLRenderer;
-    stats: Stats;
-    scene: THREE.Scene;
-    camera: THREE.PerspectiveCamera;
-    world: World;
-    controls: Controls;
     players: Map<string, Player>;
+    stats: Stats;
+    world: World;
 
     protected vectors: Vectors = { 
         vector1: new THREE.Vector3(), 
@@ -31,30 +33,24 @@ export class Engine {
     };
     protected spheres: Model[];
 
-    constructor(player: Player, world: World) {
+    constructor(player: Player) {
         this.clock = new THREE.Clock();
-        this.player = player;
-        this.world = world;
-
-        this.renderer = this.startRenderer();
         this.stats = this.startStats();
-        this.scene = this.startScene();
 
-        this.camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1000);
-        this.camera.rotation.order = 'YXZ';
-
-        this.controls = new Controls(this.camera, this.player);
-
-        this.world.loadWorld(this.scene, this.animate);
+        this.player = player;
+        this.world = new World();
 
         this.spheres = [];
-        this.createSpheres();
 
         // network players
         this.players = new Map();
     }
 
-    protected createSpheres = () => {
+    createSpheres = () => {
+        if (!this.scene) {
+            return;
+        }
+
         const sphereGeometry = new THREE.IcosahedronGeometry(this.SPHERE_RADIUS, 5);
         const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xbbbb44 });
 
@@ -70,37 +66,21 @@ export class Engine {
         }
     }
 
-    protected startStats = () => {
+    createControls = () => {
+        if (this.camera) {
+            this.controls = new Controls(this.camera, this.player);
+        }
+    }
+
+    protected startStats = (): Stats => {
         const stats: Stats = new (Stats as any)();
         stats.domElement.style.position = 'absolute';
         stats.domElement.style.top = '0px';
         return stats;
     }
 
-    protected startScene = () => {
-        const scene = new THREE.Scene();
-        scene.background = this.world.background;
-        scene.fog = this.world.fog;
-
-        for (const light of this.world.lights) {
-            scene.add(light);
-        }
-        return scene;
-    }
-
-    protected startRenderer = () => {
-        const renderer = new THREE.WebGLRenderer( { antialias: true } );
-        renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.setSize( window.innerWidth, window.innerHeight );
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.VSMShadowMap;
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        return renderer;
-    }
-
     protected teleportPlayerIfOob = () => {
-        if (this.camera.position.y <= - 25) {
+        if (this.camera && this.player && this.camera.position.y <= - 25) {
             this.player.initializeCollider();
             this.camera.position.copy(this.player.collider.end);
             this.camera.rotation.set(0, 0, 0);
@@ -182,7 +162,7 @@ export class Engine {
             const damping = Math.exp(-1.5 * deltaTime) - 1;
             sphere.velocity.addScaledVector(sphere.velocity, damping);
 
-            this.playerSphereCollision(this.player, sphere, this.vectors);
+            this.playerSphereCollision(this.player!, sphere, this.vectors);
         });
 
         this.spheresCollisions(this.vectors);
@@ -192,7 +172,41 @@ export class Engine {
         }
     }
 
+    startRenderer = (canvas: HTMLCanvasElement) => {
+        const cssRenderer = new CSS3DRenderer({ element: canvas });
+        cssRenderer.domElement.style.position = 'absolute';
+        cssRenderer.domElement.style.top = '0';
+        cssRenderer.domElement.style.margin	= '0';
+        cssRenderer.domElement.style.padding = '0';
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.domElement.style.position	= 'absolute';
+        renderer.domElement.style.top = '0';
+        renderer.domElement.style.zIndex = '1';
+        renderer.setPixelRatio( window.devicePixelRatio );
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.VSMShadowMap;
+        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+
+        renderer.domElement.appendChild(cssRenderer.domElement);
+        return renderer;
+    }
+
+    startGame = () => {
+        if (this.scene) {
+            this.createControls();
+            this.createSpheres();
+            this.world.startScene(this.scene);
+            this.animate();
+        }
+    }
+
     protected animate = () => {
+        if (!this.controls || !this.camera || !this.renderer || !this.scene) {
+            return;
+        }
+
         const deltaTime = Math.min(0.05, this.clock.getDelta()) / this.STEPS_PER_FRAME;
 
         // we look for collisions in substeps to mitigate the risk of
@@ -221,6 +235,9 @@ export class Engine {
     }
 
     throwBall = () => {
+        if (!this.camera || !this.controls) {
+            return;
+        }
         const sphere = this.spheres[this.sphereIdx];
         this.camera.getWorldDirection(this.player.direction);
         sphere.collider.center.copy(this.player.collider.end).addScaledVector(this.player.direction, this.player.collider.radius * 1.5);
@@ -234,7 +251,7 @@ export class Engine {
         this.sphereIdx = (this.sphereIdx + 1) % this.spheres.length;
     }
 
-    createStateMessage = (): SimplePlayer => {
+    createStateMessage = (): SimplePlayer | undefined => {
         return {
             playerID: this.player.playerID,
             position: Utils.createVectorJSON(this.player.collider.end),

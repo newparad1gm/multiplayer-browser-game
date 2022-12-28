@@ -10,6 +10,7 @@ export class Controls {
 
     constructor(camera: THREE.PerspectiveCamera, player: Player) {
         this.camera = camera;
+        this.camera.rotation.order = 'YXZ';
         this.player = player;
     }
 
