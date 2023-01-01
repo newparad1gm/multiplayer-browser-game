@@ -34,4 +34,26 @@ export class Utils {
     static setVector = (vector: THREE.Vector3 | THREE.Euler, simple: SimpleVector) => {
         vector.set(simple.x, simple.y, simple.z);
     }
+
+	static getPositionFromMatrix = (m: THREE.Matrix4): THREE.Vector3 => {
+        return new THREE.Vector3(
+            m.elements[12], 
+            m.elements[13], 
+            m.elements[14]
+        );
+	}
+
+	static getScaleFromMatrix = (m: THREE.Matrix4): THREE.Vector3 => {
+        const vector = new THREE.Vector3();
+
+		var sx = vector.set( m.elements[0], m.elements[1], m.elements[2] ).length();
+		var sy = vector.set( m.elements[4], m.elements[5], m.elements[6] ).length();
+		var sz = vector.set( m.elements[8], m.elements[9], m.elements[10] ).length();
+
+		vector.x = sx;
+		vector.y = sy;
+		vector.z = sz;
+
+		return vector;
+	}
 }

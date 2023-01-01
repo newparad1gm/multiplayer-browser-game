@@ -50,15 +50,6 @@ export const CollisionWorld = (props: WorldProps) => {
 			{/* 
 			// @ts-ignore */}
 			<mesh geometry={nodes.Cube004.geometry} material={materials['Material.001']} position={[7.68, -5.59, 26.38]} scale={0.5} castShadow={true} receiveShadow={true} />
-			<mesh geometry={new THREE.BoxGeometry(10, 0.02, 10 )} rotation={[Math.PI / 2, 0, 0]}>
-				{/* Drei's HTML component can "hide behind" canvas geometry */}
-				<Html rotation-x={-Math.PI / 2} position={[0, 0.05, -0.09]} transform occlude>
-					<div onPointerDown={(e) => e.stopPropagation()}>
-						HELLO
-						<iframe src='https://www.youtube.com/embed/bXuoqY9bQmQ?rel=0'/>
-					</div>
-				</Html>
-			</mesh>
 		</group>
 	)
 }

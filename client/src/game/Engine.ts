@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
-import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer'
+import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer';
 import { Player } from './Player';
 import { Model, Vectors, SimplePlayer } from '../Types';
 import { Controls } from './Controls';
@@ -17,7 +17,9 @@ export class Engine {
     protected clock: THREE.Clock;
 
     renderer?: THREE.WebGLRenderer;
+    cssRenderer?: CSS3DRenderer;
     scene?: THREE.Scene;
+    cssScene?: THREE.Scene;
     camera?: THREE.PerspectiveCamera;
     controls?: Controls;
     
@@ -172,32 +174,40 @@ export class Engine {
         }
     }
 
-    startRenderer = (canvas: HTMLCanvasElement) => {
-        const cssRenderer = new CSS3DRenderer({ element: canvas });
+    startRenderer = () => {
+        if (this.renderer) {
+            const renderer = this.renderer;
+            renderer.domElement.style.position = 'absolute';
+            renderer.domElement.style.top = '0';
+            renderer.domElement.style.margin = '0';
+            renderer.domElement.style.padding = '0';
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.VSMShadowMap;
+            renderer.outputEncoding = THREE.sRGBEncoding;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.domElement.style.zIndex = '1';
+        }
+    }
+
+    startCSSRenderer = () =>{
+        const cssRenderer = new CSS3DRenderer();
         cssRenderer.domElement.style.position = 'absolute';
         cssRenderer.domElement.style.top = '0';
         cssRenderer.domElement.style.margin	= '0';
         cssRenderer.domElement.style.padding = '0';
-
-        const renderer = new THREE.WebGLRenderer();
-        renderer.domElement.style.position	= 'absolute';
-        renderer.domElement.style.top = '0';
-        renderer.domElement.style.zIndex = '1';
-        renderer.setPixelRatio( window.devicePixelRatio );
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.VSMShadowMap;
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-        renderer.domElement.appendChild(cssRenderer.domElement);
-        return renderer;
+        cssRenderer.setSize(window.innerWidth, window.innerHeight);
+        this.cssScene = new THREE.Scene();
+        this.cssRenderer = cssRenderer;
+        return cssRenderer;
     }
 
     startGame = () => {
+        this.startRenderer();
+
         if (this.scene) {
             this.createControls();
             this.createSpheres();
-            this.world.startScene(this.scene);
+            this.world.startScene(this.scene, this.cssScene);
             this.animate();
         }
     }
@@ -222,7 +232,10 @@ export class Engine {
             this.teleportPlayerIfOob();
         }
 
-        this.renderer.render(this.scene, this.camera);
+        if (this.cssRenderer && this.cssScene) {
+            this.cssRenderer.render(this.cssScene, this.camera);
+            this.world.renderCSSPlanes(this.scene);
+        }
 
         this.stats.update();
         requestAnimationFrame(this.animate);

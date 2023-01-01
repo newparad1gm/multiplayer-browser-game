@@ -6,6 +6,7 @@ import { Engine } from './game/Engine';
 import { Network } from './game/Network';
 import { CollisionWorld } from './world/CollisionWorld';
 import { Canvas } from '@react-three/fiber';
+import './Game.css';
 
 const WebSocketHost = process.env.REACT_APP_WEBSOCKET_CONNECTION || window.location.origin.replace(/^http/, 'ws');
 const client = new WebSocket(WebSocketHost);
@@ -16,6 +17,7 @@ export const Game = (): JSX.Element => {
     const guiRef = useRef<GUI>();
     const networkRef = useRef<Network>();
     const containerRef = createRef<HTMLDivElement>();
+    const cssRef = createRef<HTMLDivElement>();
 
     const initContainer = () => {
         if (containerRef.current && engine.controls) {
@@ -94,12 +96,16 @@ export const Game = (): JSX.Element => {
         const onWindowResize = () => {
             if (engine.camera && engine.renderer) {
                 const renderer = engine.renderer;
+                const cssRenderer = engine.cssRenderer;
                 const camera = engine.camera;
 
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
     
                 renderer.setSize(window.innerWidth, window.innerHeight);
+                if (cssRenderer) {
+                    cssRenderer.setSize(window.innerWidth, window.innerHeight);
+                }
             }
         };
         window.addEventListener('resize', onWindowResize);
@@ -109,14 +115,22 @@ export const Game = (): JSX.Element => {
         connectPlayer();
     }, []);
 
+    useEffect(() => {
+        if (cssRef.current) {
+            const renderer = engine.startCSSRenderer();
+            cssRef.current.appendChild(renderer.domElement);
+        }
+    }, [cssRef]);
+
     return (
         <div>
             <div id='info'>
                 MOUSE to look around<br/>
                 WASD to move and SPACE to jump
             </div>
-            <div ref={containerRef} style={{ width: '100%', height: '100vh' }}>
-                <Canvas gl={canvas => engine.startRenderer(canvas)} onCreated={({gl, scene, camera}) => {
+            <div id='css' ref={cssRef} />
+            <div id='webgl' ref={containerRef}>
+                <Canvas onCreated={({gl, scene, camera}) => {
                     engine.camera = camera as THREE.PerspectiveCamera;
                     engine.renderer = gl;
                     engine.scene = scene;
