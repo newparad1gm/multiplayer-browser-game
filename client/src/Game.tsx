@@ -5,6 +5,7 @@ import { Player } from './game/Player';
 import { Engine } from './game/Engine';
 import { Network } from './game/Network';
 import { CollisionWorld } from './world/CollisionWorld';
+import { MazeWorld } from './world/MazeWorld';
 import { Canvas } from '@react-three/fiber';
 import './Game.css';
 
@@ -24,7 +25,7 @@ export const Game = (): JSX.Element => {
             const container = containerRef.current;
             container.appendChild(engine.stats.domElement);
 
-            engine.controls.addControls(document, engine.throwBall);
+            engine.controls.addControls(document, engine.shoot);
             container.addEventListener('mousedown', () => {
                 document.body.requestPointerLock();
                 if (engine.controls) {
@@ -49,6 +50,9 @@ export const Game = (): JSX.Element => {
             if (messageData.hasOwnProperty('connected')) {
                 if (!networkRef.current) {
                     player.playerID = messageData.connected;
+                    engine.world.maze.width = messageData.maze.width;
+                    engine.world.maze.height = messageData.maze.height;
+                    engine.world.maze.maze = messageData.maze.maze;
                     startNetwork(messageData.interval);
                 }
             } else if (messageData.hasOwnProperty('state')) {
@@ -136,7 +140,7 @@ export const Game = (): JSX.Element => {
                     engine.scene = scene;
                 }}>
                     <Suspense>
-                        <CollisionWorld world={engine.world} startGame={startGame} />
+                        <MazeWorld world={engine.world} startGame={startGame} />
                     </Suspense>
                 </Canvas>
             </div>

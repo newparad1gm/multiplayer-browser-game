@@ -6,6 +6,7 @@ import { Model, Vectors, SimplePlayer } from '../Types';
 import { Controls } from './Controls';
 import { Utils } from '../Utils';
 import { World } from '../world/World';
+import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry';
 
 export class Engine {
     GRAVITY: number = 30;
@@ -22,11 +23,14 @@ export class Engine {
     cssScene?: THREE.Scene;
     camera?: THREE.PerspectiveCamera;
     controls?: Controls;
+    raycaster: THREE.Raycaster;
     
     player: Player;
     players: Map<string, Player>;
     stats: Stats;
     world: World;
+
+    textureLoader: THREE.TextureLoader;
 
     protected vectors: Vectors = { 
         vector1: new THREE.Vector3(), 
@@ -43,6 +47,10 @@ export class Engine {
         this.world = new World();
 
         this.spheres = [];
+
+        this.raycaster = new THREE.Raycaster();
+
+        this.textureLoader = new THREE.TextureLoader();
 
         // network players
         this.players = new Map();
@@ -207,6 +215,7 @@ export class Engine {
         if (this.scene) {
             this.createControls();
             this.createSpheres();
+            //this.scene.add(this.controls!.mouseHelper);
             this.world.startScene(this.scene, this.cssScene);
             this.animate();
         }
@@ -262,6 +271,57 @@ export class Engine {
         sphere.velocity.addScaledVector(this.player.velocity, 2);
 
         this.sphereIdx = (this.sphereIdx + 1) % this.spheres.length;
+    }
+
+    shoot = () => {
+        if (!this.camera || !this.scene || !this.controls) {
+            return;
+        }
+        const cameraPos = new THREE.Vector3();
+        const cameraDir = new THREE.Vector3();
+        this.raycaster.set(this.camera.getWorldPosition(cameraPos), this.camera.getWorldDirection(cameraDir));
+        const intersects: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = [];
+        this.raycaster.intersectObject(this.scene, true, intersects);
+        if (intersects.length) {
+            const intersection = intersects[0];
+            const object = intersection.object;
+            const normal = intersection.face?.normal.clone();
+            const point = intersection.point;
+            this.controls?.mouseHelper.position.copy(point);
+            const scale = 1;
+            const size = new THREE.Vector3(scale, scale, scale);
+            const decalDiffuse = this.textureLoader.load('/textures/decal-diffuse.png');
+            const decalNormal = this.textureLoader.load('/textures/decal-normal.jpg');
+            const decalMaterial = new THREE.MeshPhongMaterial({
+                specular: 0x444444,
+                map: decalDiffuse,
+                normalMap: decalNormal,
+                normalScale: new THREE.Vector2(1, 1),
+                shininess: 30,
+                transparent: true,
+                depthTest: true,
+                depthWrite: false,
+                polygonOffset: true,
+                polygonOffsetFactor: - 4,
+                wireframe: false
+            });
+            decalMaterial.color.setHex(Math.random() * 0xffffff);
+
+            object.traverse(child => {
+                if (child instanceof THREE.Mesh) {
+                    const orientation = new THREE.Euler();
+                    if (normal) {
+                        normal.transformDirection(child.matrixWorld);
+                        normal.multiplyScalar(10);
+                        normal.add(point);
+                        this.controls!.mouseHelper.lookAt(normal);
+                        orientation.copy(this.controls!.mouseHelper.rotation);
+                    }
+                    const m = new THREE.Mesh(new DecalGeometry(child, point, orientation, size), decalMaterial);
+                    this.scene?.add(m);
+                }
+            });
+        }
     }
 
     createStateMessage = (): SimplePlayer | undefined => {

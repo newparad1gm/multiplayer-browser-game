@@ -3,6 +3,7 @@ import http from 'http';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
 import { Player, SimpleVector } from './types';
+import { Maze } from './maze';
 
 export class Game {
     wsServer: WebSocketServer;
@@ -13,6 +14,8 @@ export class Game {
     running: boolean;
     interval: number;
     nextRunTime: Date;
+
+    maze: Maze;
 
     constructor(server: http.Server) {
         // Spinning the http server and the websocket server.
@@ -30,6 +33,8 @@ export class Game {
         }
         this.nextRunTime = new Date();
         this.running = false;
+
+        this.maze = new Maze(12, 8);
     }
 
     sendMessage = (userID: string, json: string) => {
@@ -49,9 +54,12 @@ export class Game {
             const userID = uuidv4();
             this.setConnection(ws, userID);
             this.clients.set(userID, ws);
-            this.sendMessage(userID, JSON.stringify({ connected: userID, interval: this.interval }));
+            if (!this.running) {
+                this.startGame();
+            }
+            this.sendMessage(userID, JSON.stringify({ connected: userID, interval: this.interval, maze: this.maze.clientMaze }));
             console.log(`Connected ${userID} to ${request.socket.remoteAddress}`);
-        })
+        });
     }
 
     setConnection = (connection: WebSocket, userID: string) => {
@@ -60,13 +68,10 @@ export class Game {
         connection.on('message', (data, isBinary) => {
             const message = isBinary ? data : data.toString();
             this.players.set(userID, this.parsePlayerMessage(userID, message as string));
-            if (!this.running) {
-                this.startGame();
-            }
         });
 
         connection.on('close', () => {
-            console.log("Player " + userID + " disconnected.");
+            console.log(`Player ${userID} disconnected.`);
             server.clients.delete(userID);
             server.players.delete(userID);
             if (!server.clients.size) {
@@ -92,6 +97,7 @@ export class Game {
 
     startGame = () => {
         console.log('Game starting');
+        this.maze = new Maze(12, 8);
         this.running = true;
         setImmediate(() => this.run());
     }

@@ -8,10 +8,15 @@ export class Controls {
     protected camera: THREE.PerspectiveCamera;
     protected player: Player;
 
+    mouseHelper: THREE.Mesh;
+
     constructor(camera: THREE.PerspectiveCamera, player: Player) {
         this.camera = camera;
         this.camera.rotation.order = 'YXZ';
         this.player = player;
+
+        this.mouseHelper = new THREE.Mesh( new THREE.BoxGeometry( 1, 1, 10 ), new THREE.MeshNormalMaterial() );
+        this.mouseHelper.visible = false;
     }
 
     protected getForwardVector = (): THREE.Vector3 => {
@@ -31,7 +36,7 @@ export class Controls {
         return this.player.direction;
     }
 
-    addControls = (document: Document, throwBallCallback: () => void) => {
+    addControls = (document: Document, shootCallback: () => void) => {
         document.addEventListener('keydown', event => {
             this.keyStates.add(event.code);
         });
@@ -40,7 +45,7 @@ export class Controls {
         });
         document.addEventListener('mouseup', () => {
             if (document.pointerLockElement !== null) {
-                throwBallCallback();
+                shootCallback();
             }
         });
         document.body.addEventListener('mousemove', event => {

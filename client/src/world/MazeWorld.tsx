@@ -5,17 +5,19 @@ Command: npx gltfjsx@6.0.9 collision-world.glb
 
 import React, { useEffect, useState } from 'react'
 import * as THREE from 'three';
-import { Html, useGLTF } from '@react-three/drei';
+import { useGLTF } from '@react-three/drei';
 import { World } from './World';
+import { MazeObjects } from './Maze'
 
 interface WorldProps {
     world: World;
 	startGame: () => void;
 }
 
-export const CollisionWorld = (props: WorldProps) => {
+export const MazeWorld = (props: WorldProps) => {
 	const {world, startGame} = props;
-	const {nodes, materials, scene} = useGLTF('/gltf/collision-world.glb');
+	const {materials} = useGLTF('/gltf/collision-world.glb');
+	const [scene, setScene] = useState<THREE.Scene>(new THREE.Scene());
 	const [meshes, setMeshes] = useState<THREE.Mesh[]>([]);
 
     useEffect(() => {
@@ -41,26 +43,37 @@ export const CollisionWorld = (props: WorldProps) => {
         directionalLight.shadow.bias = -0.00006;
         world.lights.push(directionalLight);
 
-		const mesh = new THREE.Mesh(new THREE.BoxGeometry(10, 0.02, 10 ), materials['Material.001']);
-		mesh.position.set(1, 1, 1);
+		startGame();
+    }, []);
+
+	useEffect(() => {
 		const currMeshes: THREE.Mesh[] = [];
-		currMeshes.push(mesh);
+		const maze = world.maze;
+		const floor = new THREE.Mesh(new THREE.BoxGeometry(maze.width*10, 0.02, maze.height*10), materials['Material.001']);
+		floor.position.set(0, 0, 0);
+		currMeshes.push(floor);
+		maze.maze.forEach((row, r) => {
+			row.forEach((cell, c) => {
+				if (cell === MazeObjects.Wall) {
+					const wall = new THREE.Mesh(new THREE.BoxGeometry(1, 4, 1), materials['Material.001']);
+					wall.position.set(r, 1, c);
+					currMeshes.push(wall);
+				}
+			})
+		})
 		setMeshes(currMeshes);
 		
+		const currScene = new THREE.Scene();
 		for (const newMesh of currMeshes) {
-			scene.add(newMesh);
+			currScene.add(newMesh);
 		}
+		setScene(currScene);
 
-		world.octree.fromGraphNode(scene);
-
-		startGame();
-    }, [scene]);
+		world.octree.fromGraphNode(currScene);
+	}, [world.maze]);
 
 	return (
 		<group {...props} dispose={null}>
-			{/* 
-			// @ts-ignore */}
-			<mesh geometry={nodes.Cube004.geometry} material={materials['Material.001']} position={[7.68, -5.59, 26.38]} scale={0.5} castShadow={true} receiveShadow={true} />
 			{
 				meshes.map(mesh => (
 					<mesh key={mesh.id} geometry={mesh.geometry} material={mesh.material} position={mesh.position} castShadow={true} receiveShadow={true}/>

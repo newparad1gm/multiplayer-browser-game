@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OctreeHelper } from "three/examples/jsm/helpers/OctreeHelper";
 import { Octree } from "three/examples/jsm/math/Octree";
 import { CSSPlane } from '../game/CSSPlane';
+import { Maze } from './Maze';
 
 export class World {
     lights: THREE.Light[];
@@ -10,6 +11,7 @@ export class World {
     octree: Octree;
     helper: OctreeHelper;
     cssPlanes: CSSPlane[];
+    maze: Maze;
 
     constructor() {
         this.lights = [];
@@ -17,6 +19,7 @@ export class World {
         this.helper = new OctreeHelper(this.octree, new THREE.Color(0x88ccee));
         this.helper.visible = false;
         this.cssPlanes = [];
+        this.maze = new Maze(10, 10);
     }
 
     renderCSSPlanes = (scene: THREE.Scene) => {
@@ -35,10 +38,10 @@ export class World {
 
         if (cssScene) {
             const cssPlane = new CSSPlane(
-                new THREE.Vector3(1, 1, 0),
-                new THREE.Euler(1, 0, 0),
+                new THREE.Vector3(-2, 1, -1),
+                new THREE.Euler(0, 0, 0),
                 new THREE.Vector2(512, 512),
-                new THREE.Vector2(2, 2)
+                new THREE.Vector2(4, 4)
             );
             scene.add(cssPlane.createObject());
 
