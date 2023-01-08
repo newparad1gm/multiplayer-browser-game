@@ -137,7 +137,7 @@ export const Game = (): JSX.Element => {
                 <Canvas onCreated={({gl, scene, camera}) => {
                     engine.camera = camera as THREE.PerspectiveCamera;
                     engine.renderer = gl;
-                    engine.scene = scene;
+                    engine.world.scene = scene;
                 }}>
                     <Suspense>
                         <MazeWorld world={engine.world} startGame={startGame} />

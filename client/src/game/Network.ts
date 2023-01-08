@@ -57,10 +57,15 @@ export class Network {
         Utils.setVector(player.velocity, simple.velocity);
         Utils.setVector(player.orientation, simple.orientation);
         Utils.setVector(player.direction, simple.direction);
+
+        for (const shot of simple.shots) {
+            this.engine.raycaster.set(new THREE.Vector3(shot.origin.x, shot.origin.y, shot.origin.z), new THREE.Vector3(shot.direction.x, shot.direction.y, shot.direction.z));
+            this.engine.splatter(shot.color, this.engine.raycaster);
+        }
     }
 
     updateState = (state: State) => {
-        if (!this.engine.scene || !this.engine.player) {
+        if (!this.engine.world.scene || !this.engine.player) {
             return;
         }
         
@@ -72,7 +77,7 @@ export class Network {
             }
             if (!this.engine.players.has(playerID)) {
                 const newPlayer = new Player(playerID, 'Soldier.glb');
-                newPlayer.model!.loadModel(this.engine.scene);
+                newPlayer.model!.loadModel(this.engine.world.scene);
                 this.engine.players.set(playerID, newPlayer);
             }
             const currPlayer = this.engine.players.get(playerID);
@@ -80,7 +85,7 @@ export class Network {
         }
         for (let [playerID, player] of Array.from(this.engine.players.entries())) {
             if (!foundPlayers.has(playerID) && player.model) {
-                player.model.model && this.engine.scene.remove(player.model.model);
+                player.model.model && this.engine.world.scene.remove(player.model.model);
                 this.engine.players.delete(playerID);
             }
         }

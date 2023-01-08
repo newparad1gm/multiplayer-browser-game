@@ -18,12 +18,19 @@ export type SimplePlayer = {
     velocity: SimpleVector;
     orientation: SimpleVector;
     direction: SimpleVector;
+    shots: Shot[];
 }
 
 export type SimpleVector = {
     x: number;
     y: number;
     z: number;
+}
+
+export type Shot = {
+    origin: SimpleVector;
+    direction: SimpleVector;
+    color: number;
 }
 
 export type State = {

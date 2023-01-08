@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import Stats from 'three/examples/jsm/libs/stats.module';
 import { CSS3DRenderer } from 'three/examples/jsm/renderers/CSS3DRenderer';
 import { Player } from './Player';
-import { Model, Vectors, SimplePlayer } from '../Types';
+import { Model, Vectors, SimplePlayer, Shot } from '../Types';
 import { Controls } from './Controls';
 import { Utils } from '../Utils';
 import { World } from '../world/World';
@@ -10,17 +10,12 @@ import { DecalGeometry } from 'three/examples/jsm/geometries/DecalGeometry';
 
 export class Engine {
     GRAVITY: number = 30;
-    NUM_SPHERES: number = 100;
-    SPHERE_RADIUS: number = 0.2;
     STEPS_PER_FRAME: number = 5;
 
-    protected sphereIdx = 0;
     protected clock: THREE.Clock;
 
     renderer?: THREE.WebGLRenderer;
     cssRenderer?: CSS3DRenderer;
-    scene?: THREE.Scene;
-    cssScene?: THREE.Scene;
     camera?: THREE.PerspectiveCamera;
     controls?: Controls;
     raycaster: THREE.Raycaster;
@@ -37,7 +32,6 @@ export class Engine {
         vector2: new THREE.Vector3(), 
         vector3: new THREE.Vector3() 
     };
-    protected spheres: Model[];
 
     constructor(player: Player) {
         this.clock = new THREE.Clock();
@@ -46,34 +40,12 @@ export class Engine {
         this.player = player;
         this.world = new World();
 
-        this.spheres = [];
-
         this.raycaster = new THREE.Raycaster();
 
         this.textureLoader = new THREE.TextureLoader();
 
         // network players
         this.players = new Map();
-    }
-
-    createSpheres = () => {
-        if (!this.scene) {
-            return;
-        }
-
-        const sphereGeometry = new THREE.IcosahedronGeometry(this.SPHERE_RADIUS, 5);
-        const sphereMaterial = new THREE.MeshLambertMaterial({ color: 0xbbbb44 });
-
-        for (let i = 0; i < this.NUM_SPHERES; i++) {
-            const sphere = Utils.createModel(sphereGeometry, sphereMaterial);
-            this.scene.add(sphere);
-
-            this.spheres.push({
-                mesh: sphere,
-                collider: new THREE.Sphere(new THREE.Vector3(0, - 100, 0), this.SPHERE_RADIUS),
-                velocity: new THREE.Vector3()
-            });
-        }
     }
 
     createControls = () => {
@@ -133,10 +105,10 @@ export class Engine {
     }
 
     protected spheresCollisions = (vectors: Vectors) => {
-        for (let i = 0, length = this.spheres.length; i < length; i++) {
-            const s1 = this.spheres[i];
+        for (let i = 0, length = this.world.spheres.length; i < length; i++) {
+            const s1 = this.world.spheres[i];
             for (let j = i + 1; j < length; j++) {
-                const s2 = this.spheres[j];
+                const s2 = this.world.spheres[j];
                 const d2 = s1.collider.center.distanceToSquared(s2.collider.center);
                 const r = s1.collider.radius + s2.collider.radius;
                 const r2 = r * r;
@@ -158,7 +130,7 @@ export class Engine {
     }
 
     protected updateSpheres = (deltaTime: number) => {
-        this.spheres.forEach(sphere => {
+        this.world.spheres.forEach(sphere => {
             sphere.collider.center.addScaledVector(sphere.velocity, deltaTime);
             const result = this.world.octree.sphereIntersect(sphere.collider);
 
@@ -177,7 +149,7 @@ export class Engine {
 
         this.spheresCollisions(this.vectors);
 
-        for (const sphere of this.spheres) {
+        for (const sphere of this.world.spheres) {
             sphere.mesh.position.copy(sphere.collider.center);
         }
     }
@@ -204,7 +176,7 @@ export class Engine {
         cssRenderer.domElement.style.margin	= '0';
         cssRenderer.domElement.style.padding = '0';
         cssRenderer.setSize(window.innerWidth, window.innerHeight);
-        this.cssScene = new THREE.Scene();
+        this.world.cssScene = new THREE.Scene();
         this.cssRenderer = cssRenderer;
         return cssRenderer;
     }
@@ -212,17 +184,17 @@ export class Engine {
     startGame = () => {
         this.startRenderer();
 
-        if (this.scene) {
+        if (this.world.scene) {
             this.createControls();
-            this.createSpheres();
+            //this.world.createSpheres();
             //this.scene.add(this.controls!.mouseHelper);
-            this.world.startScene(this.scene, this.cssScene);
+            this.world.startScene();
             this.animate();
         }
     }
 
     protected animate = () => {
-        if (!this.controls || !this.camera || !this.renderer || !this.scene) {
+        if (!this.controls || !this.camera || !this.renderer || !this.world.scene) {
             return;
         }
 
@@ -241,9 +213,9 @@ export class Engine {
             this.teleportPlayerIfOob();
         }
 
-        if (this.cssRenderer && this.cssScene) {
-            this.cssRenderer.render(this.cssScene, this.camera);
-            this.world.renderCSSPlanes(this.scene);
+        if (this.cssRenderer && this.world.cssScene) {
+            this.cssRenderer.render(this.world.cssScene, this.camera);
+            this.world.renderCSSPlanes();
         }
 
         this.stats.update();
@@ -260,7 +232,7 @@ export class Engine {
         if (!this.camera || !this.controls) {
             return;
         }
-        const sphere = this.spheres[this.sphereIdx];
+        const sphere = this.world.spheres[this.world.sphereIdx];
         this.camera.getWorldDirection(this.player.direction);
         sphere.collider.center.copy(this.player.collider.end).addScaledVector(this.player.direction, this.player.collider.radius * 1.5);
 
@@ -270,18 +242,36 @@ export class Engine {
         sphere.velocity.copy(this.player.direction).multiplyScalar(impulse);
         sphere.velocity.addScaledVector(this.player.velocity, 2);
 
-        this.sphereIdx = (this.sphereIdx + 1) % this.spheres.length;
+        this.world.sphereIdx = (this.world.sphereIdx + 1) % this.world.spheres.length;
     }
 
-    shoot = () => {
-        if (!this.camera || !this.scene || !this.controls) {
+    splatterDecal = (colorHex: number) => {
+        const decalDiffuse = this.textureLoader.load('/textures/decal-diffuse.png');
+        const decalNormal = this.textureLoader.load('/textures/decal-normal.jpg');
+        const decalMaterial = new THREE.MeshPhongMaterial({
+            specular: 0x444444,
+            map: decalDiffuse,
+            normalMap: decalNormal,
+            normalScale: new THREE.Vector2(1, 1),
+            shininess: 30,
+            transparent: true,
+            depthTest: true,
+            depthWrite: false,
+            polygonOffset: true,
+            polygonOffsetFactor: - 4,
+            wireframe: false
+        });
+        decalMaterial.color.setHex(colorHex);
+        return decalMaterial;
+    }
+
+    splatter = (colorHex: number, raycaster: THREE.Raycaster) => {
+        if (!this.world.scene) {
             return;
         }
-        const cameraPos = new THREE.Vector3();
-        const cameraDir = new THREE.Vector3();
-        this.raycaster.set(this.camera.getWorldPosition(cameraPos), this.camera.getWorldDirection(cameraDir));
+
         const intersects: THREE.Intersection<THREE.Object3D<THREE.Event>>[] = [];
-        this.raycaster.intersectObject(this.scene, true, intersects);
+        this.raycaster.intersectObject(this.world.worldScene, true, intersects);
         if (intersects.length) {
             const intersection = intersects[0];
             const object = intersection.object;
@@ -290,22 +280,7 @@ export class Engine {
             this.controls?.mouseHelper.position.copy(point);
             const scale = 1;
             const size = new THREE.Vector3(scale, scale, scale);
-            const decalDiffuse = this.textureLoader.load('/textures/decal-diffuse.png');
-            const decalNormal = this.textureLoader.load('/textures/decal-normal.jpg');
-            const decalMaterial = new THREE.MeshPhongMaterial({
-                specular: 0x444444,
-                map: decalDiffuse,
-                normalMap: decalNormal,
-                normalScale: new THREE.Vector2(1, 1),
-                shininess: 30,
-                transparent: true,
-                depthTest: true,
-                depthWrite: false,
-                polygonOffset: true,
-                polygonOffsetFactor: - 4,
-                wireframe: false
-            });
-            decalMaterial.color.setHex(Math.random() * 0xffffff);
+            const decalMaterial = this.splatterDecal(colorHex);
 
             object.traverse(child => {
                 if (child instanceof THREE.Mesh) {
@@ -318,19 +293,42 @@ export class Engine {
                         orientation.copy(this.controls!.mouseHelper.rotation);
                     }
                     const m = new THREE.Mesh(new DecalGeometry(child, point, orientation, size), decalMaterial);
-                    this.scene?.add(m);
+                    this.world.scene?.add(m);
                 }
             });
         }
     }
 
+    shots: Shot[] = [];
+
+    shoot = () => {
+        if (!this.camera || !this.world.scene || !this.controls) {
+            return;
+        }
+        const cameraPos = new THREE.Vector3();
+        const cameraDir = new THREE.Vector3();
+        this.raycaster.set(this.camera.getWorldPosition(cameraPos), this.camera.getWorldDirection(cameraDir));
+        const color = Math.random() * 0xffffff;
+        this.shots.push({
+            origin: Utils.createVectorJSON(cameraPos),
+            direction: Utils.createVectorJSON(cameraDir),
+            color: color
+        })
+        this.splatter(color, this.raycaster);
+    }
+
     createStateMessage = (): SimplePlayer | undefined => {
+        const shots: Shot[] = [];
+        while (this.shots.length) {
+            shots.push(this.shots.pop()!);
+        }
         return {
             playerID: this.player.playerID,
             position: Utils.createVectorJSON(this.player.collider.end),
             velocity: Utils.createVectorJSON(this.player.velocity),
             orientation: Utils.createVectorJSON(this.player.orientation),
-            direction: Utils.createVectorJSON(this.player.direction)
+            direction: Utils.createVectorJSON(this.player.direction),
+            shots: shots
         }
     }
 }

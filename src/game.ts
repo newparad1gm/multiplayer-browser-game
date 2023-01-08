@@ -2,7 +2,7 @@ import { Server as WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
-import { Player, SimpleVector } from './types';
+import { Player, SimpleVector, Shot } from './types';
 import { Maze } from './maze';
 
 export class Game {
@@ -88,6 +88,11 @@ export class Game {
         player.velocity = new SimpleVector(data.velocity.x, data.velocity.y, data.velocity.z);
         player.orientation = new SimpleVector(data.orientation.x, data.orientation.y, data.orientation.z);
         player.direction = new SimpleVector(data.direction.x, data.direction.y, data.direction.z);
+        for (const shot of data.shots) {
+            const origin = new SimpleVector(shot.origin.x, shot.origin.y, shot.origin.z);
+            const direction = new SimpleVector(shot.direction.x, shot.direction.y, shot.direction.z);
+            player.shots.push(new Shot(origin, direction, shot.color));
+        }
         return player;
     }
 

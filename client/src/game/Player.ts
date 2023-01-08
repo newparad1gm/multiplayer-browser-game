@@ -29,8 +29,8 @@ export class Player {
     }
 
     initializeCollider = () => {
-        this.collider.start.set(-10, 0.35, -10);
-        this.collider.end.set(-10, this.height, -10);
+        this.collider.start.set(-5, 0.35, 5);
+        this.collider.end.set(-5, this.height, 5);
         this.collider.radius = 0.35;
     }
 

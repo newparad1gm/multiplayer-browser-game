@@ -172,6 +172,5 @@ export class Maze {
 		this.partition(horiz+1, r2, c1, vert-1);
 		this.partition(r1, horiz-1, vert+1, c2);
 		this.partition(horiz+1, r2, vert+1, c2);
-
     }
 }
