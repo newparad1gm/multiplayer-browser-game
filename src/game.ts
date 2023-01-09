@@ -3,13 +3,22 @@ import http from 'http';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
 import { Player, SimpleVector, Shot } from './types';
-import { Maze } from './maze';
+import { Maze, ClientMaze } from './maze';
+
+export type ConnectionMessage = {
+    connected: string;
+    isLead: boolean;
+    interval: number;
+    started: boolean;
+    maze?: ClientMaze;
+}
 
 export class Game {
     wsServer: WebSocketServer;
 
     clients: Map<string, WebSocket>;
     players: Map<string, Player>;
+    leadPlayer?: string;
 
     running: boolean;
     interval: number;
@@ -53,11 +62,17 @@ export class Game {
             console.log(`Received new connection from origin ${request.socket.remoteAddress}`);
             const userID = uuidv4();
             this.setConnection(ws, userID);
+            const message: ConnectionMessage = { connected: userID, isLead: false, interval: this.interval, started: true };
+            if (!this.clients.size) {
+                message.isLead = true;
+                this.leadPlayer = userID;
+            }
             this.clients.set(userID, ws);
             if (!this.running) {
                 this.startGame();
             }
-            this.sendMessage(userID, JSON.stringify({ connected: userID, interval: this.interval, maze: this.maze.clientMaze }));
+            message.maze = this.maze.clientMaze;
+            this.sendMessage(userID, JSON.stringify(message));
             console.log(`Connected ${userID} to ${request.socket.remoteAddress}`);
         });
     }
@@ -100,7 +115,7 @@ export class Game {
         return JSON.stringify({ state: Object.fromEntries(this.players) });
     }
 
-    startGame = () => {
+    startGame = async () => {
         console.log('Game starting');
         this.maze = new Maze(12, 8);
         this.running = true;

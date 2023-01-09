@@ -12,6 +12,7 @@ export class World {
 
     lights: THREE.Light[];
     background: THREE.Color | THREE.Texture | null = null;
+    environment: THREE.Texture | null = null;
     fog: THREE.FogBase | null = null;
     octree: Octree;
     helper: OctreeHelper;
@@ -70,29 +71,11 @@ export class World {
         }
 
         this.scene.background = this.background;
+        this.scene.environment = this.environment;
         this.scene.fog = this.fog;
 
         for (const light of this.lights) {
             this.scene.add(light);
-        }
-
-        if (this.cssScene) {
-            const cssPlane = new CSSPlane(
-                new THREE.Vector3(-2, 1, -1),
-                new THREE.Euler(0, 0, 0),
-                new THREE.Vector2(512, 512),
-                new THREE.Vector2(4, 4)
-            );
-            this.worldScene.add(cssPlane.createObject());
-
-            const iframe = document.createElement('iframe');
-            iframe.src = 'http://www.example.org';
-            iframe.style.width = cssPlane.cssPixelWidth;
-            iframe.style.height = cssPlane.cssPixelHeight;
-            iframe.style.border = '0px';
-            this.cssScene.add(cssPlane.createCSSObject(iframe, 0, 0, 0, 0));
-            
-            this.cssPlanes.push(cssPlane);
         }
     }
 }

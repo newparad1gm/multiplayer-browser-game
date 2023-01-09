@@ -165,6 +165,7 @@ export class Engine {
             renderer.shadowMap.type = THREE.VSMShadowMap;
             renderer.outputEncoding = THREE.sRGBEncoding;
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
+			renderer.toneMappingExposure = 1;
             renderer.domElement.style.zIndex = '1';
         }
     }

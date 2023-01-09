@@ -36,7 +36,10 @@ export class CSSPlane {
         this.planeDimensions = planeDimensions;
     }
 
-    createCSSObject = (element: HTMLElement, x: number, y: number, z: number, ry: number) => {
+    createCSSObject = (element: HTMLElement) => {
+        element.style.width = this.cssPixelWidth;
+        element.style.height = this.cssPixelHeight;
+        
         const div = document.createElement('div');
         div.style.width = this.cssPixelWidth;
         div.style.height = this.cssPixelHeight;

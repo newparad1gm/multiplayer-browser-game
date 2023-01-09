@@ -20,3 +20,15 @@
 #webgl {
     pointer-events: none;
 }
+
+#game {
+    float: left;
+    width: 80%;
+    position: relative;
+}
+
+#hud {
+    float: right;
+    background-color: white;
+    position: relative;
+}

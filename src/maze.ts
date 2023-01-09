@@ -5,6 +5,12 @@ export enum MazeObjects {
     Entrance = 3
 }
 
+export type ClientMaze = {
+    width: number;
+    height: number;
+    maze: MazeObjects[][]
+}
+
 export class Maze {
     width: number;
     height: number;
@@ -30,11 +36,10 @@ export class Maze {
         this.partition(1, this.height - 1, 1, this.width - 1);
     }
 
-    get clientMaze() {
+    get clientMaze(): ClientMaze {
         return {
             width: this.width,
             height: this.height,
-
             maze: this.maze
         };
     }
