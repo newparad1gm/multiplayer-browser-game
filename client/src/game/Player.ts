@@ -1,9 +1,11 @@
 import * as THREE from 'three';
 import { Capsule } from 'three/examples/jsm/math/Capsule';
 import { AnimatedModel } from './AnimatedModel';
+import { TextLabel } from './TextLabel';
 
 export class Player {
     playerID: string;
+    playerName: string;
     collider: Capsule;
     position: THREE.Vector3;
     velocity: THREE.Vector3;
@@ -11,11 +13,15 @@ export class Player {
     orientation: THREE.Euler;
     onFloor: boolean;
     model?: AnimatedModel;
+    isLead: boolean;
 
     readonly height: number = 1.66;
 
-    constructor(playerID: string, modelPath?: string) {
+    protected nameLabel: TextLabel;
+
+    constructor(playerID: string, playerName: string, modelPath?: string) {
         this.playerID = playerID;
+        this.playerName = playerName;
         this.collider = new Capsule();
         this.initializeCollider();
         this.position = new THREE.Vector3();
@@ -26,6 +32,22 @@ export class Player {
         if (modelPath) {
             this.model = new AnimatedModel(modelPath);
         }
+        this.nameLabel = new TextLabel(this.playerName);
+        this.isLead = false;
+    }
+
+    loadPlayer = (scene: THREE.Scene) => {
+        if (this.model) {
+            this.model.loadModel(scene);
+        }
+        this.nameLabel.loadLabel(scene);
+    }
+
+    removePlayer = (scene: THREE.Scene) => {
+        if (this.model && this.model.model) {
+            scene.remove(this.model.model);
+        }
+        this.nameLabel.removeLabel(scene);
     }
 
     initializeCollider = () => {
@@ -57,6 +79,7 @@ export class Player {
         if (this.model) {
             this.translateColliderToPosition();
             this.model.updateModel(this.position, this.orientation, this.speed, deltaTime);
+            this.nameLabel.updateLabel(this.playerName, this.collider.end);
         }
     }
 }

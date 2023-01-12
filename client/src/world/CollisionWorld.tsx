@@ -14,9 +14,9 @@ interface WorldProps {
 }
 
 export const CollisionWorld = (props: WorldProps) => {
-	const {world, startGame} = props;
-	const {nodes, materials, scene} = useGLTF('/gltf/collision-world.glb');
-	const [meshes, setMeshes] = useState<THREE.Mesh[]>([]);
+	const { world, startGame } = props;
+	const { nodes, materials, scene } = useGLTF('/gltf/collision-world.glb');
+	const [ meshes, setMeshes ] = useState<THREE.Mesh[]>([]);
 
     useEffect(() => {
         world.background = new THREE.Color(0x88ccee);

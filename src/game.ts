@@ -2,7 +2,7 @@ import { Server as WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import { v4 as uuidv4 } from 'uuid';
 import { Utils } from './utils';
-import { Player, SimpleVector, Shot } from './types';
+import { Player, SimpleVector, Shot, JsonResponse } from './types';
 import { Maze, ClientMaze } from './maze';
 
 export type ConnectionMessage = {
@@ -19,6 +19,7 @@ export class Game {
     clients: Map<string, WebSocket>;
     players: Map<string, Player>;
     leadPlayer?: string;
+    leadPlayerSocket?: WebSocket;
 
     running: boolean;
     interval: number;
@@ -43,7 +44,7 @@ export class Game {
         this.nextRunTime = new Date();
         this.running = false;
 
-        this.maze = new Maze(12, 8);
+        this.maze = new Maze(0, 0);
     }
 
     sendMessage = (userID: string, json: string) => {
@@ -56,22 +57,26 @@ export class Game {
             connection.send(json);
         }
     }
-      
+
     startWebsocket = () => {
         this.wsServer.on('connection', (ws, request) => {
             console.log(`Received new connection from origin ${request.socket.remoteAddress}`);
             const userID = uuidv4();
             this.setConnection(ws, userID);
-            const message: ConnectionMessage = { connected: userID, isLead: false, interval: this.interval, started: true };
+            const message: ConnectionMessage = { 
+                connected: userID, 
+                isLead: false, 
+                interval: this.interval, 
+                started: this.running 
+            };
             if (!this.clients.size) {
                 message.isLead = true;
                 this.leadPlayer = userID;
             }
             this.clients.set(userID, ws);
-            if (!this.running) {
-                this.startGame();
+            if (this.running) {
+                message.maze = this.maze.clientMaze;
             }
-            message.maze = this.maze.clientMaze;
             this.sendMessage(userID, JSON.stringify(message));
             console.log(`Connected ${userID} to ${request.socket.remoteAddress}`);
         });
@@ -82,7 +87,16 @@ export class Game {
         
         connection.on('message', (data, isBinary) => {
             const message = isBinary ? data : data.toString();
-            this.players.set(userID, this.parsePlayerMessage(userID, message as string));
+            try {
+                const data = JSON.parse(message as string);
+                if (data.player) {
+                    this.setPlayerFromData(this.getOrCreatePlayer(userID), data.player);
+                } else if (data.start && !this.running && userID === this.leadPlayer) {
+                    this.startGame(parseInt(data.start.maze.width), parseInt(data.start.maze.height));
+                }
+            } catch (error) {
+                console.log(`Invalid message from ${userID}: ${message}`);
+            }
         });
 
         connection.on('close', () => {
@@ -96,9 +110,17 @@ export class Game {
         });
     }
 
-    parsePlayerMessage = (userID: string, message: string): Player => {
-        const data = JSON.parse(message);
-        const player = new Player(userID);
+    getOrCreatePlayer = (userID: string): Player => {
+        let player = this.players.get(userID);
+        if (!player) {
+            player = new Player(userID);
+            this.players.set(userID, player);
+        }
+        return player;
+    }
+
+    setPlayerFromData = (player: Player, data: JsonResponse): Player => {
+        player.playerName = data.playerName;
         player.position = new SimpleVector(data.position.x, data.position.y, data.position.z);
         player.velocity = new SimpleVector(data.velocity.x, data.velocity.y, data.velocity.z);
         player.orientation = new SimpleVector(data.orientation.x, data.orientation.y, data.orientation.z);
@@ -115,10 +137,15 @@ export class Game {
         return JSON.stringify({ state: Object.fromEntries(this.players) });
     }
 
-    startGame = async () => {
+    startGame = async (width: number, height: number) => {
         console.log('Game starting');
-        this.maze = new Maze(12, 8);
+        console.log(`Maze with ${width} ${height} ${typeof width} ${typeof height}`);
+        this.maze = new Maze(width, height);
         this.running = true;
+        this.sendMessageToAll(JSON.stringify({ 
+            started: this.running,
+            maze: this.maze.clientMaze
+        }));
         setImmediate(() => this.run());
     }
 

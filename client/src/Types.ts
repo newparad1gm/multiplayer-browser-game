@@ -14,6 +14,7 @@ export type Vectors = {
 
 export type SimplePlayer = {
     playerID: string;
+    playerName: string;
     position: SimpleVector;
     velocity: SimpleVector;
     orientation: SimpleVector;

@@ -1,5 +1,10 @@
+export interface JsonResponse {
+    [name: string]: any;
+}
+
 export class Player {
     playerID: string;
+    playerName: string;
     position: SimpleVector;
     velocity: SimpleVector;
     orientation: SimpleVector;
@@ -8,6 +13,7 @@ export class Player {
 
     constructor(playerID: string) {
         this.playerID = playerID;
+        this.playerName = playerID;
         this.position = new SimpleVector();
         this.velocity = new SimpleVector();
         this.orientation = new SimpleVector();

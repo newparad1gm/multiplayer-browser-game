@@ -1,22 +1,23 @@
-import React, { useEffect, createRef, useCallback, useMemo, useRef, useState, Suspense } from 'react';
+import React, { useEffect, createRef, useCallback, useMemo, useState, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GUI } from 'lil-gui';
 import { Player } from './game/Player';
 import { Engine } from './game/Engine';
 import { Network } from './game/Network';
 import { MazeWorld } from './world/MazeWorld';
-import { Canvas } from '@react-three/fiber';
+import { NewWindow } from './NewWindow';
+import { GameOptions } from './options/GameOptions';
 import './Game.css';
 
 const WebSocketHost = process.env.REACT_APP_WEBSOCKET_CONNECTION || window.location.origin.replace(/^http/, 'ws');
 const client = new WebSocket(WebSocketHost);
 
 export const Game = (): JSX.Element => {
-    const player = useMemo(() => new Player('single', 'Soldier.glb'), []);
-    const [playerLead, setPlayerLead] = useState<boolean>(true);
+    const player = useMemo(() => new Player('single', 'Your Name', 'Soldier.glb'), []);
     const engine = useMemo(() => new Engine(player), [player]);
-    const networkRef = useRef<Network>();
-    const gameRef = createRef<HTMLDivElement>();
+    const [ gameStarted, setGameStarted ] = useState<boolean>(false);
+    const [ network, setNetwork ] = useState<Network>();
     const glRef = createRef<HTMLDivElement>();
     const cssRef = createRef<HTMLDivElement>();
     const divRef = createRef<HTMLDivElement>();
@@ -36,18 +37,18 @@ export const Game = (): JSX.Element => {
         }
     }
 
-    const disconnectGame = () => {
+    const disconnectGame = useCallback(() => {
         console.log('Disconnected');
-        if (networkRef.current) {
-            networkRef.current.stopClient();
-            networkRef.current = undefined;
+        if (network) {
+            network.stopClient();
+            setNetwork(undefined);
         }
-    }
+    }, [network]);
 
-    const startNetwork = useCallback((interval?: number) => {
-        const network = new Network(client, engine, interval);
-        network.startClient();
-        networkRef.current = network;
+    const startNetwork = useCallback((interval?: number): Network => {
+        const newNetwork = new Network(client, engine, interval);
+        setNetwork(newNetwork);
+        return newNetwork;
     }, [engine]);
 
     const startGame = () => {
@@ -90,19 +91,24 @@ export const Game = (): JSX.Element => {
             } catch (e) {
                 messageData = JSON.parse(JSON.stringify(message.data));
             }
+            let currNetwork = network;
             if (messageData.hasOwnProperty('connected')) {
                 player.playerID = messageData.connected;
-                setPlayerLead(messageData.isLead);
-                if (!networkRef.current) {
-                    engine.world.maze.width = messageData.maze.width;
-                    engine.world.maze.height = messageData.maze.height;
-                    engine.world.maze.maze = messageData.maze.maze;
-                    startNetwork(messageData.interval);
-                }
+                player.isLead = messageData.isLead;
+                currNetwork = startNetwork(messageData.interval);
             } else if (messageData.hasOwnProperty('state')) {
-                if (networkRef.current) {
-                    networkRef.current.updateState(messageData.state);
+                if (network) {
+                    network.updateState(messageData.state);
                 }
+            }
+
+            if (messageData.started && currNetwork) {
+                const maze = messageData.maze;
+                engine.world.maze.width = maze.width;
+                engine.world.maze.height = maze.height;
+                engine.world.maze.maze = maze.maze;
+                currNetwork.startClient();
+                setGameStarted(true);
             }
         };
 
@@ -115,13 +121,7 @@ export const Game = (): JSX.Element => {
         client.onclose = () => {
             disconnectGame();
         }
-    }, [engine.world.maze, player, startNetwork]);
-
-    useEffect(() => {
-        if (gameRef.current && !playerLead) {
-            gameRef.current.style.width = '100%';
-        }
-    }, [gameRef, playerLead]);
+    }, [engine.world.maze, player, network, startNetwork, disconnectGame]);
 
     useEffect(() => {
         if (cssRef.current) {
@@ -132,22 +132,22 @@ export const Game = (): JSX.Element => {
 
     return (
         <div style={{width: '100%'}}>
-            <div id='game' ref={gameRef}>
-                <div id='css' ref={cssRef} />
-                <div id='webgl' ref={glRef}>
-                    <Canvas onCreated={({gl, scene, camera}) => {
-                        engine.camera = camera as THREE.PerspectiveCamera;
-                        engine.renderer = gl;
-                        engine.world.scene = scene;
-                    }}>
-                        <Suspense>
-                            <MazeWorld world={engine.world} startGame={startGame} divRef={divRef} playerLead={playerLead}/>
-                        </Suspense>
-                    </Canvas>
-                </div>
-            </div>
-            <div id='hud' ref={divRef}>
-            </div>
+            { gameStarted && <div id='css' ref={cssRef} /> }
+            { gameStarted && <div id='webgl' ref={glRef}>
+                <Canvas onCreated={({gl, scene, camera}) => {
+                    engine.camera = camera as THREE.PerspectiveCamera;
+                    engine.renderer = gl;
+                    engine.world.scene = scene;
+                }}>
+                    <Suspense>
+                        <MazeWorld world={engine.world} startGame={startGame} divRef={divRef}/>
+                    </Suspense>
+                </Canvas>
+            </div> }
+            <div id='hud' ref={divRef}/>
+            <NewWindow>
+                <GameOptions player={player} client={client} gameStarted={gameStarted}/>
+            </NewWindow>
         </div>
     )
 }

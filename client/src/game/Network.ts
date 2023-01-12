@@ -48,11 +48,12 @@ export class Network {
     }
 
     sendToServer = () => {
-        const stateMessage = this.engine.createStateMessage();
+        const stateMessage = { player: this.engine.createStateMessage() };
         this.client.send(JSON.stringify(stateMessage));
     }
 
-    setPlayerVectors = (player: Player, simple: SimplePlayer) => {
+    setPlayer = (player: Player, simple: SimplePlayer) => {
+        player.playerName = simple.playerName;
         Utils.setVector(player.collider.end, simple.position);
         Utils.setVector(player.velocity, simple.velocity);
         Utils.setVector(player.orientation, simple.orientation);
@@ -76,16 +77,16 @@ export class Network {
                 continue;
             }
             if (!this.engine.players.has(playerID)) {
-                const newPlayer = new Player(playerID, 'Soldier.glb');
-                newPlayer.model!.loadModel(this.engine.world.scene);
+                const newPlayer = new Player(playerID, player.playerName, 'Soldier.glb');
+                newPlayer.loadPlayer(this.engine.world.scene);
                 this.engine.players.set(playerID, newPlayer);
             }
             const currPlayer = this.engine.players.get(playerID);
-            this.setPlayerVectors(currPlayer!, player);
+            this.setPlayer(currPlayer!, player);
         }
         for (let [playerID, player] of Array.from(this.engine.players.entries())) {
             if (!foundPlayers.has(playerID) && player.model) {
-                player.model.model && this.engine.world.scene.remove(player.model.model);
+                player.removePlayer(this.engine.world.scene);
                 this.engine.players.delete(playerID);
             }
         }

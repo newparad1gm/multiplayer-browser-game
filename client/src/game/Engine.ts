@@ -325,6 +325,7 @@ export class Engine {
         }
         return {
             playerID: this.player.playerID,
+            playerName: this.player.playerName,
             position: Utils.createVectorJSON(this.player.collider.end),
             velocity: Utils.createVectorJSON(this.player.velocity),
             orientation: Utils.createVectorJSON(this.player.orientation),

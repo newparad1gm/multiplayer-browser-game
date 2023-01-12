@@ -15,12 +15,11 @@ interface WorldProps {
     world: World;
 	startGame: () => void;
 	divRef: React.RefObject<HTMLDivElement>;
-	playerLead: boolean;
 }
 
 export const MazeWorld = (props: WorldProps) => {
-	const {world, startGame, divRef, playerLead} = props;
-	const {materials} = useGLTF('/gltf/collision-world.glb');
+	const { world, startGame, divRef } = props;
+	const { materials } = useGLTF('/gltf/collision-world.glb');
 	const sceneRef = useRef<THREE.Scene>(null);
 	const background = useLoader(RGBELoader, '/textures/royal_esplanade_1k.hdr');
 
@@ -79,7 +78,7 @@ export const MazeWorld = (props: WorldProps) => {
 
 	useEffect(() => {
 		const addJiraIssues = async () => {
-			if (world.cssScene && divRef.current && !playerLead) {
+			if (world.cssScene && divRef.current) {
 				const maze = world.maze;
 				const cssPlane = new CSSPlane(
 					new THREE.Vector3(maze.cols, 5, maze.rows),
@@ -95,20 +94,21 @@ export const MazeWorld = (props: WorldProps) => {
 				iframe.style.height = cssPlane.cssPixelHeight;
 				iframe.style.border = '0px';
 	
+				divRef.current.append(iframe);
 				//const sprints = await api.activeSprints('107');
 				//divRef.current.append(JSON.stringify(sprints));
 				/*const div = document.createElement('div');
                 const response = await fetch('https://haventech.atlassian.net/rest/agile/1.0/sprint/3564/issue');
                 const issues = await response.json();
                 div.append(issues);*/
-				world.cssScene.add(cssPlane.createCSSObject(iframe));
+				world.cssScene.add(cssPlane.createCSSObject(divRef.current));
 				
 				world.cssPlanes.push(cssPlane);
 			}
 		}
 
 		addJiraIssues();
-	}, [world.cssPlanes, world.cssScene, world.maze, world.worldScene, divRef, playerLead]);
+	}, [world.cssPlanes, world.cssScene, world.maze, world.worldScene, divRef]);
 
 	useEffect(() => {
 		if (sceneRef.current) {

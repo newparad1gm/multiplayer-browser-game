@@ -23,12 +23,10 @@
 
 #game {
     float: left;
-    width: 80%;
+    width: 100%;
     position: relative;
 }
 
 #hud {
-    float: right;
-    background-color: white;
     position: relative;
 }
