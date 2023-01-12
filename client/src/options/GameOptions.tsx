@@ -1,5 +1,6 @@
 import React, { createRef, useCallback } from 'react';
 import { Player } from '../game/Player';
+import { JiraView } from './JiraView';
 
 interface GameOptionsProps {
     player: Player;
@@ -19,7 +20,8 @@ export const GameOptions = (props: GameOptionsProps) => {
 
     return (
         <div>
-            { player.isLead && !gameStarted && <LeadOptions client={client}/> }<br/>
+            { player.isLead && !gameStarted && <GameStartOptions client={client}/> }<br/>
+            { player.isLead && gameStarted && <JiraView client={client}/> }<br/>
             Name: <input type='text' ref={nameRef} defaultValue={player.playerName}/><br/>
             <button onClick={setName}>
                 Set Name
@@ -28,11 +30,11 @@ export const GameOptions = (props: GameOptionsProps) => {
     )
 }
 
-interface LeadOptionsProps {
+interface GameStartOptionsProps {
     client: WebSocket;
 }
 
-export const LeadOptions = (props: LeadOptionsProps) => {
+export const GameStartOptions = (props: GameStartOptionsProps) => {
     const { client } = props;
     const widthRef = createRef<HTMLInputElement>();
     const heightRef = createRef<HTMLInputElement>();

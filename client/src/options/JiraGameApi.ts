@@ -1,25 +1,3 @@
-
-/*import JiraApi, { JsonResponse } from "jira-client";
-
-export class JiraGameApi {
-    jira: JiraApi;
-
-    constructor() {
-        this.jira = new JiraApi({
-            protocol: 'https',
-            host: 'haventech.atlassian.net',
-            strictSSL: true
-        });
-    }
-
-    activeSprints = async (boardId: string): Promise<JsonResponse[]> => {
-        const response = await this.jira.getAllSprints(boardId, undefined, undefined, 'active');
-        if (response.values && response.values.length) {
-            return response.values as JsonResponse[];
-        }
-        return []
-    }
-}*/
 export interface JsonResponse {
     [name: string]: any;
 }
@@ -48,10 +26,20 @@ export class JiraGameApi {
                 'Accept': 'application/json'
             }
         });
-        const sprints = await response.json();
-        if (sprints.issues && sprints.issues.length) {
-            return sprints.issues as JsonResponse[];
+        const sprint = await response.json();
+        if (sprint.issues && sprint.issues.length) {
+            return sprint.issues as JsonResponse[];
         }
         return [];
+    }
+
+    getIssue = async (issueId: number): Promise<JsonResponse> => {
+        const response = await fetch(`${this.jiraUrl}/rest/agile/1.0/issue/${issueId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+        return response.json();
     }
 }

@@ -100,6 +100,11 @@ export const Game = (): JSX.Element => {
                 if (network) {
                     network.updateState(messageData.state);
                 }
+            } else if (messageData.hasOwnProperty('screenData')) {
+                if (divRef.current) {
+                    divRef.current.innerHTML = messageData.screenData;
+                    divRef.current.style.backgroundColor = 'white';
+                }
             }
 
             if (messageData.started && currNetwork) {
@@ -121,7 +126,7 @@ export const Game = (): JSX.Element => {
         client.onclose = () => {
             disconnectGame();
         }
-    }, [engine.world.maze, player, network, startNetwork, disconnectGame]);
+    }, [engine.world.maze, player, network, divRef, startNetwork, disconnectGame]);
 
     useEffect(() => {
         if (cssRef.current) {

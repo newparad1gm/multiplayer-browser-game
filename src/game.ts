@@ -93,6 +93,8 @@ export class Game {
                     this.setPlayerFromData(this.getOrCreatePlayer(userID), data.player);
                 } else if (data.start && !this.running && userID === this.leadPlayer) {
                     this.startGame(parseInt(data.start.maze.width), parseInt(data.start.maze.height));
+                } else if (data.screenData && userID === this.leadPlayer) {
+                    this.sentScreenData(data.screenData);
                 }
             } catch (error) {
                 console.log(`Invalid message from ${userID}: ${message}`);
@@ -108,6 +110,13 @@ export class Game {
                 this.running = false;
             }
         });
+    }
+
+    sentScreenData = (data: JsonResponse) => {
+        console.log(`sending screen data ${JSON.stringify(data)}`);
+        this.sendMessageToAll(JSON.stringify({
+            screenData: data
+        }));
     }
 
     getOrCreatePlayer = (userID: string): Player => {
