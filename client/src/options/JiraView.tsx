@@ -11,7 +11,7 @@ interface JiraViewProps {
     client: WebSocket;
 }
 
-export const JiraView = (props: JiraViewProps) => {
+export const JiraView = (props: JiraViewProps): JSX.Element => {
     const { client } = props;
     const jiraGameApi = useMemo(() => new JiraGameApi(process.env.REACT_APP_JIRA_URL!), []);
     const jiraRef = createRef<HTMLDivElement>();
@@ -48,7 +48,7 @@ interface SprintViewProps {
     setSprint: React.Dispatch<React.SetStateAction<JsonResponse | undefined>>;
 }
 
-export const SprintView = (props: SprintViewProps) => {
+export const SprintView = (props: SprintViewProps): JSX.Element => {
     const { boardId, jiraGameApi, setJiraViewEnum, setSprint } = props;
     const [ sprints, setSprints ] = useState<JsonResponse[]>([]);
 
@@ -85,7 +85,7 @@ interface IssuesViewProps {
     setIssueId: React.Dispatch<React.SetStateAction<number>>;
 }
 
-export const IssuesView = (props: IssuesViewProps) => {
+export const IssuesView = (props: IssuesViewProps): JSX.Element => {
     const { boardId, sprint, jiraGameApi } = props;
     const [ issues, setIssues ] = useState<JsonResponse[]>([]);
 

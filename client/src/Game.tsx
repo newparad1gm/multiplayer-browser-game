@@ -1,13 +1,14 @@
-import React, { useEffect, createRef, useCallback, useMemo, useState, Suspense } from 'react';
+import React, { useEffect, createRef, useCallback, useMemo, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GUI } from 'lil-gui';
 import { Player } from './game/Player';
 import { Engine } from './game/Engine';
 import { Network } from './game/Network';
-import { MazeWorld } from './world/MazeWorld';
+import { WorldLoader, WorldName } from './world/WorldLoader';
 import { NewWindow } from './NewWindow';
 import { GameOptions } from './options/GameOptions';
+import { Utils } from './Utils';
 import './Game.css';
 
 const WebSocketHost = process.env.REACT_APP_WEBSOCKET_CONNECTION || window.location.origin.replace(/^http/, 'ws');
@@ -18,6 +19,7 @@ export const Game = (): JSX.Element => {
     const engine = useMemo(() => new Engine(player), [player]);
     const [ gameStarted, setGameStarted ] = useState<boolean>(false);
     const [ network, setNetwork ] = useState<Network>();
+    const [ worldName, setWorldName ] = useState<WorldName>(WorldName.Maze);
     const glRef = createRef<HTMLDivElement>();
     const cssRef = createRef<HTMLDivElement>();
     const divRef = createRef<HTMLDivElement>();
@@ -108,12 +110,18 @@ export const Game = (): JSX.Element => {
             }
 
             if (messageData.started && currNetwork) {
-                const maze = messageData.maze;
-                engine.world.maze.width = maze.width;
-                engine.world.maze.height = maze.height;
-                engine.world.maze.maze = maze.maze;
-                currNetwork.startClient();
-                setGameStarted(true);
+                if (Utils.checkEnum(WorldName, messageData.world)) {
+                    const worldName = messageData.world as WorldName;
+                    setWorldName(worldName);
+                    if (worldName === WorldName.Maze) {
+                        const maze = messageData.maze;
+                        engine.world.maze.width = maze.width;
+                        engine.world.maze.height = maze.height;
+                        engine.world.maze.maze = maze.maze;
+                    }
+                    currNetwork.startClient();
+                    setGameStarted(true);
+                }
             }
         };
 
@@ -144,14 +152,12 @@ export const Game = (): JSX.Element => {
                     engine.renderer = gl;
                     engine.world.scene = scene;
                 }}>
-                    <Suspense>
-                        <MazeWorld world={engine.world} startGame={startGame} divRef={divRef}/>
-                    </Suspense>
+                    <WorldLoader world={engine.world} worldName={worldName} divRef={divRef} startGame={startGame}/>
                 </Canvas>
             </div> }
             <div id='hud' ref={divRef}/>
             <NewWindow>
-                <GameOptions player={player} client={client} gameStarted={gameStarted}/>
+                <GameOptions worldName={worldName} setWorldName={setWorldName} player={player} client={client} gameStarted={gameStarted}/>
             </NewWindow>
         </div>
     )

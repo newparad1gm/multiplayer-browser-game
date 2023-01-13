@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { WorldName } from './world/WorldLoader';
 
 export type Model = {
     mesh: THREE.Mesh;
@@ -36,4 +37,14 @@ export type Shot = {
 
 export type State = {
     [playerID: string]: SimplePlayer
+}
+
+export type StartMessage = {
+    start: {
+        world: WorldName,
+        maze?: {
+            width: string,
+            height: string
+        }
+    }
 }

@@ -17,7 +17,7 @@ interface WorldProps {
 	divRef: React.RefObject<HTMLDivElement>;
 }
 
-export const MazeWorld = (props: WorldProps) => {
+export const MazeWorld = (props: WorldProps): JSX.Element => {
 	const { world, startGame, divRef } = props;
 	const { materials } = useGLTF('/gltf/collision-world.glb');
 	const sceneRef = useRef<THREE.Scene>(null);
@@ -74,7 +74,7 @@ export const MazeWorld = (props: WorldProps) => {
 			
 			world.octree.fromGraphNode(world.worldScene);
 		}
-	}, [materials, world.maze, world.octree, world.worldScene]);
+	}, [materials, world]);
 
 	useEffect(() => {
 		const addJiraIssues = async () => {
@@ -95,12 +95,6 @@ export const MazeWorld = (props: WorldProps) => {
 				iframe.style.border = '0px';
 	
 				divRef.current.append(iframe);
-				//const sprints = await api.activeSprints('107');
-				//divRef.current.append(JSON.stringify(sprints));
-				/*const div = document.createElement('div');
-                const response = await fetch('https://haventech.atlassian.net/rest/agile/1.0/sprint/3564/issue');
-                const issues = await response.json();
-                div.append(issues);*/
 				world.cssScene.add(cssPlane.createCSSObject(divRef.current));
 				
 				world.cssPlanes.push(cssPlane);

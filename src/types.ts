@@ -1,5 +1,17 @@
+
+import { ClientMaze } from './maze';
+
 export interface JsonResponse {
     [name: string]: any;
+}
+
+export type ConnectionMessage = {
+    connected: string;
+    world: string;
+    isLead: boolean;
+    interval: number;
+    started: boolean;
+    maze?: ClientMaze;
 }
 
 export class Player {

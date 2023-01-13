@@ -56,4 +56,12 @@ export class Utils {
 
 		return vector;
 	}
+
+    static getEnumKeys = <T extends Object>(enumToDeconstruct: T): Array<keyof typeof enumToDeconstruct> => {
+        return Object.keys(enumToDeconstruct) as Array<keyof typeof enumToDeconstruct>;
+    }
+    
+    static checkEnum = <T extends Object>(enumToCheck: T, value: string) => {
+        return Object.values(enumToCheck).includes(value);
+    }
 }
