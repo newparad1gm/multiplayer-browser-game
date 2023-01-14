@@ -28,6 +28,7 @@ export const NewWindow = (props: NewWindowProps): ReactPortal | null => {
             // Append container
             if (newWindow.current) {
                 newWindow.current.document.body.appendChild(container);
+                copyStyles(window.document, newWindow.current.document);
             }
     
             // Save reference to window for cleanup
@@ -41,6 +42,15 @@ export const NewWindow = (props: NewWindowProps): ReactPortal | null => {
             }
         }
     }, [container]);
+
+    const copyStyles = (src: Document, dest: Document) => {
+        for (const styleSheet of Array.from(src.styleSheets)) {
+            styleSheet.ownerNode && dest.head.appendChild(styleSheet.ownerNode.cloneNode(true));
+        }
+        for (const font of Array.from(src.fonts)) {
+            dest.fonts.add(font);
+        }
+    }
 
     if (container) {
         return ReactDOM.createPortal(children, container);

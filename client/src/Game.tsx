@@ -105,7 +105,6 @@ export const Game = (): JSX.Element => {
             } else if (messageData.hasOwnProperty('screenData')) {
                 if (divRef.current) {
                     divRef.current.innerHTML = messageData.screenData;
-                    divRef.current.style.backgroundColor = 'white';
                 }
             }
 
@@ -155,9 +154,9 @@ export const Game = (): JSX.Element => {
                     <WorldLoader world={engine.world} worldName={worldName} divRef={divRef} startGame={startGame}/>
                 </Canvas>
             </div> }
-            <div id='hud' ref={divRef}/>
+            <div id='hud' className='jira-view' ref={divRef}/>
             <NewWindow>
-                <GameOptions worldName={worldName} setWorldName={setWorldName} player={player} client={client} gameStarted={gameStarted}/>
+                <GameOptions worldName={worldName} setWorldName={setWorldName} engine={engine} client={client} gameStarted={gameStarted}/>
             </NewWindow>
         </div>
     )

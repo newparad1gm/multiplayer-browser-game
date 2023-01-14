@@ -5,7 +5,7 @@ export interface JsonResponse {
 export class JiraGameApi {
     constructor(readonly jiraUrl: string) {}
 
-    activeSprints = async (boardId: number): Promise<JsonResponse[]> => {
+    activeSprints = async (boardId: string): Promise<JsonResponse[]> => {
         const response = await fetch(`${this.jiraUrl}/rest/agile/1.0/board/${boardId}/sprint?state=active`, {
             method: 'GET',
             headers: {
@@ -19,7 +19,7 @@ export class JiraGameApi {
         return [];
     }
 
-    issuesForSprint = async (boardId: number, sprintId: number): Promise<JsonResponse[]> => {
+    issuesForSprint = async (boardId: string, sprintId: string): Promise<JsonResponse[]> => {
         const response = await fetch(`${this.jiraUrl}/rest/agile/1.0/board/${boardId}/sprint/${sprintId}/issue`, {
             method: 'GET',
             headers: {
@@ -33,7 +33,7 @@ export class JiraGameApi {
         return [];
     }
 
-    getIssue = async (issueId: number): Promise<JsonResponse> => {
+    getIssue = async (issueId: string): Promise<JsonResponse> => {
         const response = await fetch(`${this.jiraUrl}/rest/agile/1.0/issue/${issueId}`, {
             method: 'GET',
             headers: {

@@ -23,6 +23,7 @@ export class World {
     cssScene?: THREE.Scene;
     worldScene: THREE.Scene;
 
+    splatters: THREE.Mesh[];
     spheres: Model[];
     sphereIdx = 0;
 
@@ -35,6 +36,7 @@ export class World {
         this.maze = new Maze(10, 10);
         this.spheres = [];
         this.worldScene = new THREE.Scene();
+        this.splatters = [];
     }
 
     renderCSSPlanes = () => {

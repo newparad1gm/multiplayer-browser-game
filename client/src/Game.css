@@ -30,3 +30,44 @@
 #hud {
     position: relative;
 }
+
+.jira-view {
+    text-align: left;
+    background-color: white;
+}
+
+.list-header {
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+.list-item-link {
+    font-weight: bold;
+    color: black;
+}
+
+.list-item-link:hover {
+    color: blue;
+    cursor: pointer;
+}
+
+.issue-item {
+    padding-bottom: 10px;
+}
+
+.issue-name {
+    font-weight: bold;
+}
+
+.issue-summary {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.issue-description {    
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}

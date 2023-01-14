@@ -1,12 +1,12 @@
 import React, { createRef, useCallback } from 'react';
-import { Player } from '../game/Player';
 import { WorldName } from '../world/WorldLoader';
 import { JiraView } from './JiraView';
 import { Utils } from '../Utils';
 import { StartMessage } from '../Types';
+import { Engine } from '../game/Engine';
 
 interface GameOptionsProps {
-    player: Player;
+    engine: Engine;
     gameStarted: boolean;
     worldName: WorldName;
     setWorldName: React.Dispatch<React.SetStateAction<WorldName>>;
@@ -14,23 +14,30 @@ interface GameOptionsProps {
 }
 
 export const GameOptions = (props: GameOptionsProps): JSX.Element => {
-    const { player, gameStarted, worldName, setWorldName, client } = props;
+    const { engine, gameStarted, worldName, setWorldName, client } = props;
     const nameRef = createRef<HTMLInputElement>();
 
     const setName = useCallback(() => {
         if (nameRef.current) {
-            player.playerName = nameRef.current.value;
+            engine.player.playerName = nameRef.current.value;
         }
-    }, [player, nameRef]);
+    }, [engine, nameRef]);
+
+    const clearWorld = useCallback(() => {
+        engine.clearSplatters();
+    }, [engine]);
 
     return (
         <div>
-            { player.isLead && !gameStarted && <GameStartOptions worldName={worldName} setWorldName={setWorldName} client={client}/> }<br/>
-            { player.isLead && gameStarted && <JiraView client={client}/> }<br/>
-            Name: <input type='text' ref={nameRef} defaultValue={player.playerName}/><br/>
+            { engine.player.isLead && !gameStarted && <GameStartOptions worldName={worldName} setWorldName={setWorldName} client={client}/> }<br/>
+            { engine.player.isLead && gameStarted && <JiraView client={client}/> }<br/>
+            Name: <input type='text' ref={nameRef} defaultValue={engine.player.playerName}/><br/>
             <button onClick={setName}>
                 Set Name
-            </button>
+            </button><br/>
+            <button onClick={clearWorld}>
+                Clear World
+            </button><br/>
         </div>
     )
 }

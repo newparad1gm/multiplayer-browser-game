@@ -61,7 +61,7 @@ export class Network {
 
         for (const shot of simple.shots) {
             this.engine.raycaster.set(new THREE.Vector3(shot.origin.x, shot.origin.y, shot.origin.z), new THREE.Vector3(shot.direction.x, shot.direction.y, shot.direction.z));
-            this.engine.splatter(shot.color, this.engine.raycaster);
+            this.engine.splatter(shot.color);
         }
     }
 

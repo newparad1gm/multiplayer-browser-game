@@ -266,7 +266,7 @@ export class Engine {
         return decalMaterial;
     }
 
-    splatter = (colorHex: number, raycaster: THREE.Raycaster) => {
+    splatter = (colorHex: number) => {
         if (!this.world.scene) {
             return;
         }
@@ -293,10 +293,19 @@ export class Engine {
                         this.controls!.mouseHelper.lookAt(normal);
                         orientation.copy(this.controls!.mouseHelper.rotation);
                     }
-                    const m = new THREE.Mesh(new DecalGeometry(child, point, orientation, size), decalMaterial);
-                    this.world.scene?.add(m);
+                    const splatter = new THREE.Mesh(new DecalGeometry(child, point, orientation, size), decalMaterial);
+                    this.world.splatters.push(splatter);
+                    this.world.scene?.add(splatter);
                 }
             });
+        }
+    }
+
+    clearSplatters = () => {
+        if (this.world.scene) {
+            for (const splatter of this.world.splatters) {
+                this.world.scene.remove(splatter);
+            }
         }
     }
 
@@ -315,7 +324,7 @@ export class Engine {
             direction: Utils.createVectorJSON(cameraDir),
             color: color
         })
-        this.splatter(color, this.raycaster);
+        this.splatter(color);
     }
 
     createStateMessage = (): SimplePlayer | undefined => {
