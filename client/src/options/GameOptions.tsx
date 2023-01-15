@@ -1,4 +1,4 @@
-import React, { createRef, useCallback } from 'react';
+import React, { createRef, useCallback, useState } from 'react';
 import { WorldName } from '../world/WorldLoader';
 import { JiraView } from './JiraView';
 import { Utils } from '../Utils';
@@ -15,6 +15,7 @@ interface GameOptionsProps {
 
 export const GameOptions = (props: GameOptionsProps): JSX.Element => {
     const { engine, gameStarted, worldName, setWorldName, client } = props;
+    const [ jiraUrl, setJiraUrl ] = useState<string>(process.env.REACT_APP_JIRA_URL || '');
     const nameRef = createRef<HTMLInputElement>();
 
     const setName = useCallback(() => {
@@ -32,8 +33,8 @@ export const GameOptions = (props: GameOptionsProps): JSX.Element => {
 
     return (
         <div>
-            { engine.player.isLead && !gameStarted && <GameStartOptions worldName={worldName} setWorldName={setWorldName} client={client}/> }<br/>
-            { engine.player.isLead && gameStarted && <JiraView client={client}/> }<br/>
+            { engine.player.isLead && !gameStarted && <GameStartOptions worldName={worldName} jiraUrl={jiraUrl} setJiraUrl={setJiraUrl} setWorldName={setWorldName} client={client}/> }<br/>
+            { engine.player.isLead && gameStarted && <JiraView client={client} jiraUrl={jiraUrl}/> }<br/>
             Name: <input type='text' ref={nameRef} defaultValue={engine.player.playerName}/><br/>
             <button onClick={setName}>
                 Set Name
@@ -47,12 +48,14 @@ export const GameOptions = (props: GameOptionsProps): JSX.Element => {
 
 interface GameStartOptionsProps {
     worldName: WorldName;
+    jiraUrl: string;
+    setJiraUrl: React.Dispatch<React.SetStateAction<string>>;
     setWorldName: React.Dispatch<React.SetStateAction<WorldName>>;
     client: WebSocket;
 }
 
 export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
-    const { worldName, setWorldName, client } = props;
+    const { worldName, jiraUrl, setJiraUrl, setWorldName, client } = props;
     const widthRef = createRef<HTMLInputElement>();
     const heightRef = createRef<HTMLInputElement>();
     const screenWidthRef = createRef<HTMLInputElement>();
@@ -108,8 +111,9 @@ export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
                 <div>Maze Size - Width: <input type='number' min={0} max={24} defaultValue={12} ref={widthRef}/> Length: <input type='number' min={0} max={24} defaultValue={8} ref={heightRef}/></div>
                 <div>Box Mode: <input type='checkbox' ref={boxModeRef}/> </div>
             </div> ) }
-            <div>Screen Dimensions - Width: <input type='number' min={8} max={50} defaultValue={30} ref={screenWidthRef}/> Height: <input type='number' min={8} max={24} defaultValue={15} ref={screenHeightRef}/></div>
+            <div>Screen Dimensions - Width: <input type='number' min={8} max={50} defaultValue={20} ref={screenWidthRef}/> Height: <input type='number' min={8} max={24} defaultValue={10} ref={screenHeightRef}/></div>
             <div>Screen Position - X: <input type='number' min={-24} max={24} defaultValue={30} ref={screenPosX}/> Y: <input type='number' min={-24} max={24} defaultValue={0} ref={screenPosY}/></div>
+            <div>Jira URL: <input type='text' defaultValue={jiraUrl} onChange={e => setJiraUrl(e.target.value)}/></div>
             <button onClick={startGame}>
                 Click to start
             </button>

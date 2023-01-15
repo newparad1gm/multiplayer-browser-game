@@ -46,6 +46,14 @@
     color: black;
 }
 
+.pagination-div {
+    margin-top: 10px
+}
+
+.pagination-link {
+    margin-right: 20px
+}
+
 .list-item-link:hover {
     color: blue;
     cursor: pointer;
@@ -68,6 +76,51 @@
 .issue-description {    
     overflow: hidden;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+}
+
+.issue-estimation {
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.status-box {
+    font-size: 25px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: black;
+    display: inline-block;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+.status-box:hover {
+    background-color: blue;
+    cursor: pointer;
+}
+
+.status-columns {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.status-column {
+    border: 1px solid #fff;
+}
+
+.story-point-box {
+    font-size: 100px;
+    border-width: 2px;
+    border-style: solid;
+    border-color: black;
+    padding: 50px;
+    display: inline-block;
+    margin: 10px;
+}
+
+.story-point-box:hover {
+    background-color: blue;
+    cursor: pointer;
 }
