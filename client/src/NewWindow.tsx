@@ -47,7 +47,7 @@ export const NewWindow = (props: NewWindowProps): ReactPortal | null => {
         for (const styleSheet of Array.from(src.styleSheets)) {
             if (styleSheet.ownerNode) {
                 const styleElement = styleSheet.ownerNode.cloneNode(true);
-                if (styleElement instanceof HTMLAnchorElement && styleSheet.href) {
+                if (styleElement instanceof HTMLLinkElement && styleSheet.href) {
                     styleElement.href = styleSheet.href;
                 }
                 dest.head.appendChild(styleElement);
