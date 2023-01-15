@@ -45,7 +45,13 @@ export const NewWindow = (props: NewWindowProps): ReactPortal | null => {
 
     const copyStyles = (src: Document, dest: Document) => {
         for (const styleSheet of Array.from(src.styleSheets)) {
-            styleSheet.ownerNode && dest.head.appendChild(styleSheet.ownerNode.cloneNode(true));
+            if (styleSheet.ownerNode) {
+                const styleElement = styleSheet.ownerNode.cloneNode(true);
+                if (styleElement instanceof HTMLAnchorElement && styleSheet.href) {
+                    styleElement.href = styleSheet.href;
+                }
+                dest.head.appendChild(styleElement);
+            }
         }
         for (const font of Array.from(src.fonts)) {
             dest.fonts.add(font);
