@@ -43,8 +43,11 @@ export type StartMessage = {
     start: {
         world: WorldName,
         maze?: {
-            width: string,
-            height: string
+            width: number,
+            height: number,
+            boxMode: boolean
         }
+        screenDimensions?: SimpleVector,
+        screenPos?: SimpleVector
     }
 }

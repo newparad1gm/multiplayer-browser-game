@@ -9,6 +9,7 @@ import { WorldLoader, WorldName } from './world/WorldLoader';
 import { NewWindow } from './NewWindow';
 import { GameOptions } from './options/GameOptions';
 import { Utils } from './Utils';
+import { SimpleVector } from './Types';
 import './Game.css';
 
 const WebSocketHost = process.env.REACT_APP_WEBSOCKET_CONNECTION || window.location.origin.replace(/^http/, 'ws');
@@ -106,16 +107,24 @@ export const Game = (): JSX.Element => {
                 if (divRef.current) {
                     divRef.current.innerHTML = messageData.screenData;
                 }
+            } else if (messageData.hasOwnProperty('clearWorld')) {
+                engine.clearSplatters();
             }
 
             if (messageData.started && currNetwork) {
                 if (Utils.checkEnum(WorldName, messageData.world)) {
                     const worldName = messageData.world as WorldName;
                     setWorldName(worldName);
+                    const screenDimensions: SimpleVector = messageData.screenDimensions;
+                    const screenPos: SimpleVector = messageData.screenPos;
+                    engine.world.screenDimensions.set(screenDimensions.x, screenDimensions.y);
+                    engine.world.screenPos.set(screenPos.x, screenPos.y, screenPos.z);
                     if (worldName === WorldName.Maze) {
                         const maze = messageData.maze;
                         engine.world.maze.width = maze.width;
                         engine.world.maze.height = maze.height;
+                        engine.world.maze.wallHeight = screenDimensions.y;
+                        engine.world.maze.boxMode = maze.boxMode;
                         engine.world.maze.maze = maze.maze;
                     }
                     currNetwork.startClient();
@@ -133,7 +142,7 @@ export const Game = (): JSX.Element => {
         client.onclose = () => {
             disconnectGame();
         }
-    }, [engine.world.maze, player, network, divRef, startNetwork, disconnectGame]);
+    }, [engine, player, network, divRef, startNetwork, disconnectGame]);
 
     useEffect(() => {
         if (cssRef.current) {
@@ -146,7 +155,7 @@ export const Game = (): JSX.Element => {
         <div style={{width: '100%'}}>
             { gameStarted && <div id='css' ref={cssRef} /> }
             { gameStarted && <div id='webgl' ref={glRef}>
-                <Canvas onCreated={({gl, scene, camera}) => {
+                <Canvas linear flat onCreated={({gl, scene, camera}) => {
                     engine.camera = camera as THREE.PerspectiveCamera;
                     engine.renderer = gl;
                     engine.world.scene = scene;

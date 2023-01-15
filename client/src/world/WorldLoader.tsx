@@ -20,7 +20,7 @@ export const WorldLoader = (props: WorldLoaderProps): JSX.Element => {
 
     return (
         <Suspense>
-            { worldName === WorldName.Collision && <CollisionWorld world={world} startGame={startGame}/> }
+            { worldName === WorldName.Collision && <CollisionWorld world={world} startGame={startGame} divRef={divRef}/> }
             { worldName === WorldName.Maze && <MazeWorld world={world} startGame={startGame} divRef={divRef}/> }
         </Suspense>
     )

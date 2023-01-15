@@ -18,6 +18,8 @@ export class Game {
     nextRunTime: Date;
 
     world: string;
+    screenPos: SimpleVector;
+    screenDimensions: SimpleVector;
     maze: Maze;
 
     constructor(server: http.Server) {
@@ -38,7 +40,9 @@ export class Game {
         this.running = false;
 
         this.world = '';
-        this.maze = new Maze(0, 0);
+        this.screenPos = new SimpleVector(0, 0, 0);
+        this.screenDimensions = new SimpleVector(0, 0, 0);
+        this.maze = new Maze(0, 0, 0, true);
     }
 
     sendMessage = (userID: string, json: string) => {
@@ -61,7 +65,7 @@ export class Game {
                 connected: userID, 
                 world: this.world,
                 isLead: false, 
-                interval: this.interval, 
+                interval: this.interval,
                 started: this.running 
             };
             if (!this.clients.size) {
@@ -70,6 +74,8 @@ export class Game {
             }
             this.clients.set(userID, ws);
             if (this.running) {
+                message.screenPos = this.screenPos,
+                message.screenDimensions = this.screenDimensions,
                 message.maze = this.maze.clientMaze;
             }
             this.sendMessage(userID, JSON.stringify(message));
@@ -90,6 +96,8 @@ export class Game {
                     this.startGame(data.start);
                 } else if (data.screenData && userID === this.leadPlayer) {
                     this.sentScreenData(data.screenData);
+                } else if (data.clearWorld && userID === this.leadPlayer) {
+                    this.sendMessageToAll(JSON.stringify({ clearWorld: true}));
                 }
             } catch (error) {
                 console.log(`Invalid message from ${userID}: ${message}`);
@@ -125,15 +133,11 @@ export class Game {
 
     setPlayerFromData = (player: Player, data: JsonResponse): Player => {
         player.playerName = data.playerName;
-        player.position = new SimpleVector(data.position.x, data.position.y, data.position.z);
-        player.velocity = new SimpleVector(data.velocity.x, data.velocity.y, data.velocity.z);
-        player.orientation = new SimpleVector(data.orientation.x, data.orientation.y, data.orientation.z);
-        player.direction = new SimpleVector(data.direction.x, data.direction.y, data.direction.z);
-        for (const shot of data.shots) {
-            const origin = new SimpleVector(shot.origin.x, shot.origin.y, shot.origin.z);
-            const direction = new SimpleVector(shot.direction.x, shot.direction.y, shot.direction.z);
-            player.shots.push(new Shot(origin, direction, shot.color));
-        }
+        player.position.setVector(data.position.x, data.position.y, data.position.z);
+        player.velocity.setVector(data.velocity.x, data.velocity.y, data.velocity.z);
+        player.orientation.setVector(data.orientation.x, data.orientation.y, data.orientation.z);
+        player.direction.setVector(data.direction.x, data.direction.y, data.direction.z);
+        player.shots = data.shots || [];
         return player;
     }
 
@@ -144,18 +148,24 @@ export class Game {
     startGame = async (start: JsonResponse) => {
         console.log(`Game starting with map ${start.world}`);
         this.world = start.world;
+        this.screenDimensions.setVector(start.screenDimensions.x, start.screenDimensions.y, start.screenDimensions.z);
+        this.screenPos.setVector(start.screenPos.x, start.screenPos.y, start.screenPos.z);
         if (start.world === 'Maze') {
             const width = parseInt(start.maze.width);
             const height = parseInt(start.maze.height);
-            console.log(`Maze with ${width} ${height}`);
-            this.maze = new Maze(width, height);
+            const boxMode = start.maze.boxMode;
+            console.log(`Maze with ${width} ${height} and boxMode: ${boxMode}`);
+            this.maze = new Maze(width, height, this.screenDimensions.y, boxMode);
         }
         this.running = true;
-        this.sendMessageToAll(JSON.stringify({ 
+        const startMessage: ConnectionMessage = {
             started: this.running,
             world: this.world,
-            maze: this.maze.clientMaze
-        }));
+            maze: this.maze.clientMaze,
+            screenDimensions: this.screenDimensions,
+            screenPos: this.screenPos
+        }
+        this.sendMessageToAll(JSON.stringify(startMessage));
         setImmediate(() => this.run());
     }
 

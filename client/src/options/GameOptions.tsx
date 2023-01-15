@@ -25,7 +25,10 @@ export const GameOptions = (props: GameOptionsProps): JSX.Element => {
 
     const clearWorld = useCallback(() => {
         engine.clearSplatters();
-    }, [engine]);
+        if (engine.player.isLead) {
+            client.send(JSON.stringify({ clearWorld: true }));
+        }
+    }, [client, engine]);
 
     return (
         <div>
@@ -52,6 +55,11 @@ export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
     const { worldName, setWorldName, client } = props;
     const widthRef = createRef<HTMLInputElement>();
     const heightRef = createRef<HTMLInputElement>();
+    const screenWidthRef = createRef<HTMLInputElement>();
+    const screenHeightRef = createRef<HTMLInputElement>();
+    const boxModeRef = createRef<HTMLInputElement>();
+    const screenPosX = createRef<HTMLInputElement>();
+    const screenPosY = createRef<HTMLInputElement>();
 
     const startGame = useCallback(() => {
         if (Utils.checkEnum(WorldName, worldName)) {
@@ -62,10 +70,11 @@ export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
             }
             let sendMessage = false;
             if (worldName === WorldName.Maze) {
-                if (widthRef.current && heightRef.current) {
+                if (widthRef.current && heightRef.current && boxModeRef.current) {
                     message.start.maze = {
-                        width: widthRef.current.value,
-                        height: heightRef.current.value
+                        width: parseInt(widthRef.current.value),
+                        height: parseInt(heightRef.current.value),
+                        boxMode: boxModeRef.current.checked,
                     }
                     sendMessage = true;
                 }
@@ -73,9 +82,16 @@ export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
                 sendMessage = true;
             }
 
+            if (screenWidthRef.current && screenHeightRef.current && screenPosX.current && screenPosY.current) {
+                const screenHeight = parseInt(screenHeightRef.current.value);
+                message.start.screenDimensions = { x: parseInt(screenWidthRef.current.value), y: screenHeight, z: 0 };
+                message.start.screenPos = { x: parseInt(screenPosX.current.value), y: screenHeight / 2, z: parseInt(screenPosY.current.value) };
+                sendMessage = sendMessage && true;
+            }
+
             sendMessage && client.send(JSON.stringify(message));
         }
-    }, [client, widthRef, heightRef, worldName]);
+    }, [client, widthRef, heightRef, boxModeRef, screenWidthRef, screenHeightRef, screenPosX, screenPosY, worldName]);
 
     return (
         <div>
@@ -89,10 +105,11 @@ export const GameStartOptions = (props: GameStartOptionsProps): JSX.Element => {
                 )) }
             </select>
             { worldName === WorldName.Maze && ( <div>
-                Maze Size<br/>
-                Width: <input type='number' min={0} max={24} defaultValue={12} ref={widthRef}/><br/>
-                Height: <input type='number' min={0} max={24} defaultValue={8} ref={heightRef}/><br/>
+                <div>Maze Size - Width: <input type='number' min={0} max={24} defaultValue={12} ref={widthRef}/> Length: <input type='number' min={0} max={24} defaultValue={8} ref={heightRef}/></div>
+                <div>Box Mode: <input type='checkbox' ref={boxModeRef}/> </div>
             </div> ) }
+            <div>Screen Dimensions - Width: <input type='number' min={8} max={50} defaultValue={30} ref={screenWidthRef}/> Height: <input type='number' min={8} max={24} defaultValue={15} ref={screenHeightRef}/></div>
+            <div>Screen Position - X: <input type='number' min={-24} max={24} defaultValue={30} ref={screenPosX}/> Y: <input type='number' min={-24} max={24} defaultValue={0} ref={screenPosY}/></div>
             <button onClick={startGame}>
                 Click to start
             </button>

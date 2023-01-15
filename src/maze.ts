@@ -1,3 +1,5 @@
+import { ClientMaze } from './types';
+
 export enum MazeObjects {
     Empty = 0,
     Wall = 1,
@@ -5,15 +7,11 @@ export enum MazeObjects {
     Entrance = 3
 }
 
-export type ClientMaze = {
-    width: number;
-    height: number;
-    maze: MazeObjects[][]
-}
-
 export class Maze {
     width: number;
     height: number;
+    wallHeight: number;
+    boxMode: boolean;
 
     get cols(): number {
         return 2 * this.width + 1;
@@ -24,9 +22,11 @@ export class Maze {
 
     maze: MazeObjects[][];
 
-    constructor(width: number, height: number) {
+    constructor(width: number, height: number, wallHeight: number, boxMode: boolean) {
         this.width = width;
         this.height = height;
+        this.wallHeight = wallHeight;
+        this.boxMode = boxMode;
         
         this.maze = this.initArray(MazeObjects.Empty);
 
@@ -40,6 +40,8 @@ export class Maze {
         return {
             width: this.width,
             height: this.height,
+            wallHeight: this.wallHeight,
+            boxMode: this.boxMode,
             maze: this.maze
         };
     }

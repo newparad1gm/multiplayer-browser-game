@@ -167,6 +167,7 @@ export class Engine {
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
 			renderer.toneMappingExposure = 1;
             renderer.domElement.style.zIndex = '1';
+            THREE.ColorManagement.legacyMode = false;
         }
     }
 

@@ -113,6 +113,14 @@ export const IssuesView = (props: IssuesViewProps): JSX.Element => {
     const issuesRef = useRef<JsonResponse[]>([]);
     const [ issuesToDisplay, setIssuesToDisplay ] = useState<JsonResponse[]>([]);
 
+    const filterOnAccount = useCallback((): JsonResponse[] => {
+        let issues = issuesRef.current;
+        if (accountId) {
+            issues = issues.filter(issue => issue.fields.assignee?.accountId === accountId);
+        }
+        return issues;
+    }, [accountId]);
+
     useEffect(() => {
         const getIssues = async () => {
             const issues = await jiraGameApi.issuesForSprint(boardId, sprint.id);
@@ -120,19 +128,11 @@ export const IssuesView = (props: IssuesViewProps): JSX.Element => {
             setIssuesToDisplay(filterOnAccount());
         }
         getIssues();
-    }, [sprint]);
-
-    const filterOnAccount = (): JsonResponse[] => {
-        let issues = issuesRef.current;
-        if (accountId) {
-            issues = issues.filter(issue => issue.fields.assignee?.accountId === accountId);
-        }
-        return issues;
-    }
+    }, [boardId, sprint, jiraGameApi, filterOnAccount]);
 
     useEffect(() => {
         setIssuesToDisplay(filterOnAccount());
-    }, [accountId]);
+    }, [accountId, filterOnAccount]);
 
     return (
         <div>
@@ -158,7 +158,7 @@ export const IssueListView = (props: IssueListViewProps): JSX.Element => {
     const setIssue = useCallback((issueId: string) => {
         setIssueId(issueId);
         setJiraViewEnum(JiraViewEnum.Issue);
-    }, []);
+    }, [setIssueId, setJiraViewEnum]);
 
     return (
         <div className='issue-item'>
@@ -191,12 +191,12 @@ export const IssueView = (props: IssueViewProps): JSX.Element | null => {
             }
             getIssue();
         }
-    }, [issueId]);
+    }, [issueId, jiraGameApi]);
 
     const setIssueAccount = useCallback((accountId?: string) => {
         setAccountId(accountId);
         setJiraViewEnum(JiraViewEnum.Issues);
-    }, []);
+    }, [setAccountId, setJiraViewEnum]);
 
     return issue ? (
         <div>

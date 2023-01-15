@@ -23,6 +23,9 @@ export class World {
     cssScene?: THREE.Scene;
     worldScene: THREE.Scene;
 
+    screenDimensions: THREE.Vector2;
+    screenPos: THREE.Vector3;
+
     splatters: THREE.Mesh[];
     spheres: Model[];
     sphereIdx = 0;
@@ -33,9 +36,11 @@ export class World {
         this.helper = new OctreeHelper(this.octree, new THREE.Color(0x88ccee));
         this.helper.visible = false;
         this.cssPlanes = [];
-        this.maze = new Maze(10, 10);
+        this.maze = new Maze(10, 10, 10, false);
         this.spheres = [];
         this.worldScene = new THREE.Scene();
+        this.screenDimensions = new THREE.Vector2();
+        this.screenPos = new THREE.Vector3();
         this.splatters = [];
     }
 
@@ -66,6 +71,31 @@ export class World {
             });
         }
     }
+
+	addScreen = (div: HTMLDivElement): THREE.Object3D<THREE.Event> | undefined => {
+        if (!this.cssScene) {
+            return;
+        }
+        
+        const cssPlane = new CSSPlane(
+            this.screenPos,
+            new THREE.Euler(0, -(Math.PI / 2), 0),
+            new THREE.Vector2(this.screenDimensions.x * 64, this.screenDimensions.y * 64),
+            this.screenDimensions
+        );
+
+        const iframe = document.createElement('iframe');
+        iframe.src = 'http://www.example.org';
+        iframe.style.width = cssPlane.cssPixelWidth;
+        iframe.style.height = cssPlane.cssPixelHeight;
+        iframe.style.border = '0px';
+
+        div.append(iframe);
+        this.cssScene.add(cssPlane.createCSSObject(div));
+        
+        this.cssPlanes.push(cssPlane);
+        return cssPlane.createObject();
+	}
 
     startScene = () => {
         if (!this.scene) {

@@ -24,12 +24,12 @@ export class Maze {
 
     boxMode: boolean;
 
-    constructor(width: number, height: number, boxMode?: boolean) {
+    constructor(width: number, height: number, wallHeight: number, boxMode?: boolean) {
         this.width = width;
         this.height = height;
 
         this.maze = [];
-        this.wallHeight = 8;
+        this.wallHeight = wallHeight;
 
         this.boxMode = boxMode || false;
     }
@@ -64,9 +64,9 @@ export class Maze {
 			row.forEach((cell, c) => {
 				if (cell === MazeObjects.Wall) {
                     if (this.boxMode) {
-                        const geom = new THREE.BoxGeometry(1, 4, 1);
+                        const geom = new THREE.BoxGeometry(1, this.wallHeight, 1);
                         const wall = new THREE.Mesh(geom, material);
-                        wall.position.set(r, 1, c);
+                        wall.position.set(r, this.wallHeight / 2, c);
                         meshes.push(wall);
                     } else {
 					    meshes.push(...this.generateWallGeometry(r, c, material));
