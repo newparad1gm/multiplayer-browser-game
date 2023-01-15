@@ -14,7 +14,6 @@ export const Crosshair = (props: CrosshairProps): JSX.Element => {
 
     useFrame(() => {
         if (lines.current && engine.camera) {
-            const vector = new THREE.Vector3(0, 0, -0.8).unproject(engine.camera);
             engine.camera.add(lines.current);
             lines.current.position.set(0, 0, -0.25);
         }

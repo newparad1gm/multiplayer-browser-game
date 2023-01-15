@@ -80,14 +80,6 @@ export class World {
             new THREE.Vector2(this.screenDimensions.x * 64, this.screenDimensions.y * 64),
             this.screenDimensions
         );
-
-        const iframe = document.createElement('iframe');
-        iframe.src = 'http://www.example.org';
-        iframe.style.width = cssPlane.cssPixelWidth;
-        iframe.style.height = cssPlane.cssPixelHeight;
-        iframe.style.border = '0px';
-
-        div.append(iframe);
         this.cssScene.add(cssPlane.createCSSObject(div));
         
         this.cssPlanes.push(cssPlane);
