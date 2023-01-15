@@ -20,7 +20,7 @@ export class World {
     maze: Maze;
     
     scene?: THREE.Scene;
-    cssScene?: THREE.Scene;
+    cssScene: THREE.Scene;
     worldScene: THREE.Scene;
 
     screenDimensions: THREE.Vector2;
@@ -38,6 +38,7 @@ export class World {
         this.cssPlanes = [];
         this.maze = new Maze(10, 10, 10, false);
         this.spheres = [];
+        this.cssScene = new THREE.Scene();
         this.worldScene = new THREE.Scene();
         this.screenDimensions = new THREE.Vector2();
         this.screenPos = new THREE.Vector3();
@@ -73,10 +74,6 @@ export class World {
     }
 
 	addScreen = (div: HTMLDivElement): THREE.Object3D<THREE.Event> | undefined => {
-        if (!this.cssScene) {
-            return;
-        }
-        
         const cssPlane = new CSSPlane(
             this.screenPos,
             new THREE.Euler(0, -(Math.PI / 2), 0),

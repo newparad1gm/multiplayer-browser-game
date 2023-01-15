@@ -66,17 +66,13 @@ export const Game = (): JSX.Element => {
 
         const onWindowResize = () => {
             if (engine.camera && engine.renderer) {
-                const renderer = engine.renderer;
-                const cssRenderer = engine.cssRenderer;
                 const camera = engine.camera;
 
                 camera.aspect = window.innerWidth / window.innerHeight;
                 camera.updateProjectionMatrix();
     
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                if (cssRenderer) {
-                    cssRenderer.setSize(window.innerWidth, window.innerHeight);
-                }
+                engine.setupRenderer();
+                engine.setupCSSRenderer();
             }
         };
         window.addEventListener('resize', onWindowResize);
@@ -147,6 +143,7 @@ export const Game = (): JSX.Element => {
     useEffect(() => {
         if (cssRef.current) {
             const renderer = engine.startCSSRenderer();
+            engine.setupCSSRenderer();
             cssRef.current.appendChild(renderer.domElement);
         }
     }, [cssRef, engine]);
@@ -159,8 +156,9 @@ export const Game = (): JSX.Element => {
                     engine.camera = camera as THREE.PerspectiveCamera;
                     engine.renderer = gl;
                     engine.world.scene = scene;
+                    engine.world.scene.add(engine.camera);
                 }}>
-                    <WorldLoader world={engine.world} worldName={worldName} divRef={divRef} startGame={startGame}/>
+                    <WorldLoader engine={engine} worldName={worldName} divRef={divRef} startGame={startGame}/>
                 </Canvas>
             </div> }
             <div id='hud' className='jira-view' ref={divRef}/>

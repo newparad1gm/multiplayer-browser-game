@@ -154,7 +154,7 @@ export class Engine {
         }
     }
 
-    startRenderer = () => {
+    setupRenderer = () => {
         if (this.renderer) {
             const renderer = this.renderer;
             renderer.domElement.style.position = 'absolute';
@@ -167,24 +167,30 @@ export class Engine {
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
 			renderer.toneMappingExposure = 1;
             renderer.domElement.style.zIndex = '1';
+            renderer.setSize(window.innerWidth, window.innerHeight);
             THREE.ColorManagement.legacyMode = false;
         }
     }
 
     startCSSRenderer = () =>{
         const cssRenderer = new CSS3DRenderer();
-        cssRenderer.domElement.style.position = 'absolute';
-        cssRenderer.domElement.style.top = '0';
-        cssRenderer.domElement.style.margin	= '0';
-        cssRenderer.domElement.style.padding = '0';
-        cssRenderer.setSize(window.innerWidth, window.innerHeight);
-        this.world.cssScene = new THREE.Scene();
         this.cssRenderer = cssRenderer;
         return cssRenderer;
     }
 
+    setupCSSRenderer = () => {
+        if (this.cssRenderer) {
+            const cssRenderer = this.cssRenderer;
+            cssRenderer.domElement.style.position = 'absolute';
+            cssRenderer.domElement.style.top = '0';
+            cssRenderer.domElement.style.margin	= '0';
+            cssRenderer.domElement.style.padding = '0';
+            cssRenderer.setSize(window.innerWidth, window.innerHeight);
+        }
+    }
+
     startGame = () => {
-        this.startRenderer();
+        this.setupRenderer();
 
         if (this.world.scene) {
             this.createControls();
@@ -215,7 +221,7 @@ export class Engine {
             this.teleportPlayerIfOob();
         }
 
-        if (this.cssRenderer && this.world.cssScene) {
+        if (this.cssRenderer) {
             this.cssRenderer.render(this.world.cssScene, this.camera);
             this.world.renderCSSPlanes();
         }

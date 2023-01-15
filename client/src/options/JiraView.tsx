@@ -1,5 +1,4 @@
 import React, { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { JsxEmit } from 'typescript';
 import { JiraGameApi, JsonResponse } from './JiraGameApi';
 
 enum JiraViewEnum {
@@ -16,7 +15,7 @@ interface JiraViewProps {
 
 export const JiraView = (props: JiraViewProps): JSX.Element => {
     const { client, jiraUrl } = props;
-    const jiraGameApi = useMemo(() => new JiraGameApi(jiraUrl), []);
+    const jiraGameApi = useMemo(() => new JiraGameApi(jiraUrl), [jiraUrl]);
     const jiraRef = createRef<HTMLDivElement>();
     const [ jiraViewEnum, setJiraViewEnum ] = useState<JiraViewEnum>(JiraViewEnum.Boards);
     const [ boardId, setBoardId ] = useState<string>();
@@ -36,7 +35,7 @@ export const JiraView = (props: JiraViewProps): JSX.Element => {
     const viewBacklog = useCallback(() => {
         setJiraViewEnum(JiraViewEnum.Issues);
         setSprint(undefined);
-    }, [client, jiraRef]);
+    }, [setSprint, setJiraViewEnum]);
 
     useEffect(() => {
         if (boardId) {
@@ -46,7 +45,7 @@ export const JiraView = (props: JiraViewProps): JSX.Element => {
             }
             getBoard();
         }
-    }, [boardId]);
+    }, [boardId, jiraGameApi]);
 
     return (
         <div className='jira-view'>
@@ -101,11 +100,11 @@ export const Pagination = (props: PaginationProps): JSX.Element => {
 
     const goForward = useCallback(() => {
         setPage(page + maxResults);
-    }, [page, maxResults]);
+    }, [page, maxResults, setPage]);
 
     const goBack = useCallback(() => {
         setPage(page - maxResults);
-    }, [page, maxResults]);
+    }, [page, maxResults, setPage]);
     
     return (
         <div className='pagination-div'>
@@ -139,7 +138,7 @@ export const BoardView = (props: BoardViewProps): JSX.Element => {
     const openSprints = useCallback((boardId: string) => {
         setBoardId(boardId)
         setJiraViewEnum(JiraViewEnum.Sprints);
-    }, []);
+    }, [setBoardId, setJiraViewEnum]);
 
     return (
         <div>
@@ -172,12 +171,12 @@ export const SprintView = (props: SprintViewProps): JSX.Element => {
             setSprints(sprints.values);
         }
         getSprints();
-    }, [boardId, jiraGameApi]);
+    }, [page, boardId, jiraGameApi]);
 
-    const openSprint = (sprint: JsonResponse) => {
+    const openSprint = useCallback((sprint: JsonResponse) => {
         setSprint(sprint);
         setJiraViewEnum(JiraViewEnum.Issues);
-    }
+    }, [setSprint, setJiraViewEnum]);
 
     return (
         <div>
@@ -230,7 +229,7 @@ export const IssuesView = (props: IssuesViewProps): JSX.Element => {
             setIssuesToDisplay(filterOnAccount());
         }
         getIssues();
-    }, [boardId, sprint, jiraGameApi, filterOnAccount]);
+    }, [page, boardId, sprint, jiraGameApi, filterOnAccount]);
 
     useEffect(() => {
         setIssuesToDisplay(filterOnAccount());
@@ -316,7 +315,7 @@ export const IssueView = (props: IssueViewProps): JSX.Element | null => {
             }
             getIssue();
         }
-    }, [issueId, jiraGameApi]);
+    }, [issueId, jiraGameApi, setStatusName]);
 
     useEffect(() => {
         const field = board.estimation?.field;
@@ -366,7 +365,7 @@ export const EstimationView = (props: EstimationViewProps): JSX.Element => {
             }
             updateField();
         }
-    }, [issue]);
+    }, [issue, board, jiraGameApi, setEstimation]);
 
     return (
         <div>
@@ -406,7 +405,7 @@ export const StatusView = (props: StatusViewProps): JSX.Element => {
             }
             getTransitions();
         }
-    }, [board]);
+    }, [board, issue, jiraGameApi]);
 
     return (
         <div className='status-columns'>
@@ -445,7 +444,7 @@ export const StatusColumn = (props: StatusColumnProps): JSX.Element => {
             }
             updateField();
         }
-    }, [issue]);
+    }, [issue, statusTransitionMapRef, jiraGameApi, setStatusName]);
 
     useEffect(() => {
         const getStatuses = async () => {
@@ -453,7 +452,7 @@ export const StatusColumn = (props: StatusColumnProps): JSX.Element => {
             setStatuses(statuses);
         }
         getStatuses();
-    }, [column]);
+    }, [column, jiraGameApi]);
 
     return (
         <div>
